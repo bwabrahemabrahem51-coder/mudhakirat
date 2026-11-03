@@ -2150,9 +2150,21 @@ function compactLogs(){
     keep.push(l)});
   if(keep.length!==S.logs.length)S.logs=keep}
 function logout(){
+  /* Cancel every account-owned notification before USER/session are cleared. */
+  try{
+    swPost({type:'timer-cancel'});
+    swPost({type:'remind-cfg',on:false,time:'00:00',title:'',body:''});
+    var AB=window.AndroidBridge;
+    if(AB){
+      if(AB.cancelTimer)AB.cancelTimer();
+      if(AB.cancelDaily)AB.cancelDaily();
+      if(AB.cancelNewDay)AB.cancelNewDay();
+    }
+  }catch(e){}
+  try{if(navigator.serviceWorker&&navigator.serviceWorker.ready)navigator.serviceWorker.ready.then(function(r){if(r.periodicSync)r.periodicSync.unregister('daily-reminder').catch(function(){})}).catch(function(){})}catch(e){}
   try{var FB=window.AndroidBridge;if(FB&&FB.getFcmToken){var ft=FB.getFcmToken();if(ft)frRpc('delete_fcm',{p_token:ft}).catch(function(){})}localStorage.removeItem('mz-fcm')}catch(e){}
   flushSave();if(SB){clearTimeout(SB.t);sbPush()}USER='';clearSession();if(SB){SB.tok='';try{localStorage.removeItem('mudhakirati-sb')}catch(e){}}
-  TM.running=false;AU.mode='login';AU.err='';FR.rq=null;FR.rqSeen=null;FR.rqSig='';
+  TM.running=false;TM.endAt=0;TM.leftMs=null;AU.mode='login';AU.err='';FR.rq=null;FR.rqSeen=null;FR.rqSig='';
   var lang=S.lang;S=seed();S.lang=lang;showAuth()}
 document.addEventListener('click',function(e){
   var el=e.target.closest('[data-au]');if(!el)return;var a=el.getAttribute('data-au');
