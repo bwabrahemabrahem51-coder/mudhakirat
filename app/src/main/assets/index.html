@@ -2085,7 +2085,7 @@ function authRender(){
    '<form id="fVerify" novalidate><label class="f">'+pkL('رمز التحقق','Verification code')+'<input type="text" id="aCode" required inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="[0-9]*" placeholder="••••••" style="direction:ltr;text-align:center;letter-spacing:.45em;font-size:24px;font-weight:700"></label>'+
    '<div class="err'+(AU.ok?' ok':'')+'" id="aErr" role="alert">'+esc(AU.err)+'</div>'+
    '<button class="btn" type="submit">'+pkL('تأكيد وإنشاء الحساب','Verify and continue')+'</button>'+
-   '<button class="btn ghost" type="button" data-au="skipcode" style="margin-top:6px">'+pkL('المتابعة والدخول بدون رمز','Continue without code')+'</button>'+
+   '<button class="btn ghost" type="button" data-au="skipcode" style="margin-top:6px">'+pkL('استخدام محلي بدون حساب سحابي','Use locally without a cloud account')+'</button>'+
    '<button class="link fg" type="button" data-au="resend" style="align-self:center">'+pkL('إعادة إرسال الرمز','Resend code')+'</button>'+
    '<button class="link fg" type="button" data-au="register" style="align-self:center">'+pkL('تغيير البريد','Change email')+'</button></form>'
     :rst?
@@ -2163,7 +2163,7 @@ document.addEventListener('click',function(e){
   else if(a==='resendreset')resendCode(AU.email,false,'recovery');
   else if(a==='skipcode'){
     var em=AU.email||'student@mudhakirati.app',pw=AU.pw||'123456',users=getUsers(),salt=newSalt();
-    hashPw(pw,salt).then(function(h){users[em]={salt:salt,hash:h};putUsers(users);AU.pw='';enterApp(em);showToast(pkL('تم إنشاء الحساب والدخول بنجاح','Account created and logged in'))});
+    hashPw(pw,salt).then(function(h){users[em]={salt:salt,hash:h};putUsers(users);AU.pw='';enterApp(em);showToast(pkL('تم الدخول محليًا. المزامنة والأصدقاء تحتاج حسابًا سحابيًا مؤكّدًا.','Local mode enabled. Sync and friends require a verified cloud account.'))});
   }
   else if(a==='shut')shutAuth();
   else if(a==='fs-inc'||a==='fs-dec'){var ni=FS.i+(a==='fs-inc'?1:-1);if(ni>=0&&ni<FS.L.length){FS.i=ni;fsApply()}}});
@@ -2514,15 +2514,32 @@ document.addEventListener('change',function(e){
   else if(id==='rTime'){S.remind=S.remind||{on:false,time:'18:00',last:''};S.remind.time=e.target.value||'18:00';S.remind.last='';save();regDaily()}
   else if(id==='rSubj'){S.remind=S.remind||{on:false,time:'18:00',last:''};S.remind.subj=e.target.value||'';save();regDaily()}});
 document.addEventListener('submit',function(e){
-  if(e.target.id!=='fPw')return;
+  if(e.target.id!=='fPw')return;e.preventDefault();
   var cur=document.getElementById('pwCur').value,nw=document.getElementById('pwNew').value,msg=document.getElementById('pwMsg');
-  function say(k,ok){msg.textContent=t(k);msg.style.color=ok?'var(--ok)':'var(--hot)'}
+  function sayText(m,ok){msg.textContent=m;msg.style.color=ok?'var(--ok)':'var(--hot)'}
+  function say(k,ok){sayText(t(k),ok)}
   if(nw.length<6)return say('errPw');
   var users=getUsers(),u=users[USER];if(!u)return say('errBad2');
   hashPw(cur,u.salt).then(function(h){
     if(h!==u.hash)return say('errBad2');
-    var salt=newSalt();
-    return hashPw(nw,salt).then(function(h2){users[USER]={salt:salt,hash:h2};putUsers(users);document.getElementById('fPw').reset();say('pwDone',true)})})});
+    var cloud=false;try{var st=JSON.parse(localStorage.getItem('mudhakirati-sb')||'null');cloud=!!(SB.tok||(st&&st.rt))}catch(x){cloud=!!SB.tok}
+    var remote=cloud?sbTok().then(function(tok){
+      if(!tok)throw {message:'not_authenticated'};
+      return sbReq('/auth/v1/user',{m:'PUT',tok:tok,b:{password:nw}})
+    }):Promise.resolve();
+    return remote.then(function(){
+      var salt=newSalt();
+      return hashPw(nw,salt).then(function(h2){
+        users[USER]={salt:salt,hash:h2};
+        if(!putUsers(users))throw {local:true};
+        document.getElementById('fPw').reset();say('pwDone',true)
+      })
+    }).catch(function(err){
+      if(err&&err.local)return sayText(pkL('تغيّرت كلمة السر السحابية لكن تعذّر حفظ النسخة المحلية. سجّل خروج ثم ادخل بالكلمة الجديدة.','Cloud password changed, but the local copy could not be saved. Log out and use the new password.'),false);
+      var m=String(err&&(err.msg||err.error_description||err.message)||'');
+      sayText(/different|same/i.test(m)?pkL('اختر كلمة سر مختلفة عن القديمة','Choose a password different from the old one'):/weak|at least|short/i.test(m)?t('errPw'):pkL('تعذّر تغيير كلمة السر على الحساب السحابي. تأكد من الإنترنت وحاول مرة ثانية.','Could not change the cloud password. Check your connection and try again.'),false)
+    })
+  }).catch(function(){sayText(pkL('تعذّر تغيير كلمة السر، حاول مرة ثانية','Could not change the password, try again'),false)})});
 
 /* ---------- events ---------- */
 var rt;
