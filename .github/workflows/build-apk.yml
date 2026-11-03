@@ -28,7 +28,7 @@ jobs:
 
       # Always: debug-signed APK (installs directly on a phone, no secrets needed)
       - name: Build debug APK
-        run: gradle :app:assembleDebug --stacktrace
+        run: gradle :app:assembleDebug --console=plain
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
