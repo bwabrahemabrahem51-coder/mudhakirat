@@ -1,3 +1,4 @@
+import java.util.Properties
 import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
 
 plugins {
@@ -25,7 +26,7 @@ android {
   signingConfigs {
     create("release") {
       // Local builds: read keystore.properties (next to settings.gradle.kts). Falls back to env vars.
-      val props = java.util.Properties().apply {
+      val props = Properties().apply {
         val f = rootProject.file("keystore.properties")
         if (f.exists()) f.inputStream().use { load(it) }
       }
