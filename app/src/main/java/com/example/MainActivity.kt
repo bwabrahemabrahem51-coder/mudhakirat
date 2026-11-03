@@ -143,6 +143,9 @@ class MainActivity : ComponentActivity() {
             isVerticalScrollBarEnabled = false
             isHorizontalScrollBarEnabled = false
             overScrollMode = View.OVER_SCROLL_NEVER
+            isLongClickable = false
+            isHapticFeedbackEnabled = false
+            setOnLongClickListener { true }
 
             settings.apply {
                 javaScriptEnabled = true
