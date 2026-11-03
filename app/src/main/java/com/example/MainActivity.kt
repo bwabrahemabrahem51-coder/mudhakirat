@@ -49,7 +49,8 @@ import java.io.FileOutputStream
 class MainActivity : ComponentActivity() {
 
     companion object {
-        const val CHANNEL_ID = "mudhakirati_notifications"
+        const val CHANNEL_ID = "mudhakirati_alerts_v2"
+        const val OLD_CHANNEL_ID = "mudhakirati_notifications"
 
         /** true while the activity is visible (the page handles its own alerts then) */
         @Volatile
@@ -253,19 +254,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "تنبيهات مذاكرتي",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "إشعارات انتهاء وقت المذاكرة والتذكير اليومي"
-                enableVibration(true)
-                vibrationPattern = longArrayOf(100, 200, 100, 200)
-            }
-            val manager = getSystemService(NotificationManager::class.java)
-            manager?.createNotificationChannel(channel)
-        }
+        Notifier.ensureChannel(this)
     }
 
     private fun requestNotificationPermission() {
@@ -295,7 +284,8 @@ class MainActivity : ComponentActivity() {
                     .setContentText(body)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(body))
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .setDefaults(NotificationCompat.DEFAULT_ALL)
+                    .setDefaults(NotificationCompat.DEFAULT_VIBRATE or NotificationCompat.DEFAULT_LIGHTS)
+                    .setSound(Notifier.soundUri(this))
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent)
                     .build()
