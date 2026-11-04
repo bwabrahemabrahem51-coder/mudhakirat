@@ -2973,11 +2973,34 @@ window.addEventListener('storage',function(e){
     if(UI.sheet||DR)return;
     var nd;try{nd=migrate(JSON.parse(e.newValue))}catch(x){return}
     nd.view=S.view;SYNCING=true;try{S=nd;render()}finally{SYNCING=false}}});
+/* ---------- intro sound: page-flip (assets/flip.mp3), preloaded so it starts with the notebook ---------- */
+var FLIP={ctx:null,buf:null,ready:null};
+(function(){try{
+  var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  FLIP.ctx=new AC();
+  FLIP.ready=fetch('flip.mp3').then(function(r){return r.arrayBuffer()})
+    .then(function(b){return new Promise(function(ok,no){FLIP.ctx.decodeAudioData(b,ok,no)})})
+    .then(function(b){FLIP.buf=b}).catch(function(){})
+}catch(e){}})();
+function flipSound(quick){
+  var c=FLIP.ctx;if(!c||!FLIP.ready)return;
+  FLIP.ready.then(function(){
+    if(!FLIP.buf)return;
+    try{
+      if(c.state==='suspended')c.resume();
+      var src=c.createBufferSource(),g=c.createGain();
+      src.buffer=FLIP.buf;src.connect(g);g.connect(c.destination);
+      var t=c.currentTime;
+      g.gain.setValueAtTime(1,t);
+      if(quick){g.gain.setValueAtTime(1,t+.8);g.gain.linearRampToValueAtTime(0,t+1.2)}
+      src.start(t);if(quick)src.stop(t+1.25)
+    }catch(e){}})}
 function playIntro(quick){
   if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)return;
   var el=document.createElement('div');el.id='intro';el.className=quick?'q':'';
   el.innerHTML='<div class="nb"><div class="cov"></div>'+[0,1,2,3,4,5].map(function(i){return '<i class="pg'+(i===5?' hd':'')+'" style="--i:'+i+';--z:'+(9-i)+'"></i>'}).join('')+'<b class="pen"></b></div><div class="lg"><img src="'+LOGO+'" alt=""><b>'+esc(t('app'))+'</b></div>';
   document.body.appendChild(el);
+  flipSound(quick);
   setTimeout(function(){el.classList.add('off');setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el)},700)},quick?1100:3200)}
 /* ======================= مساحتي =======================
    1) الجدول الأسبوعي  2) الستريك مع الأصدقاء (Supabase)  3) بطاقات الملاحظات المهمة */
