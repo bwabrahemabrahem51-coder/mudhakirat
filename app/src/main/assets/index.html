@@ -1946,7 +1946,21 @@ function updateStreak(){
   var e=document.getElementById('strk');if(!e)return;
   if(S.view==='progress'){e.style.display='none';return}
   e.style.display='inline-flex';
-  e.setAttribute('title',t('streak'));e.setAttribute('aria-label',t('streak')+': '+streak());var sn=streak();e.innerHTML=flameFx(sn,20)+'<b class="num">'+sn+'</b>'}
+  e.setAttribute('title',t('streak'));e.setAttribute('aria-label',t('streak')+': '+streak());var sn=streak();e.innerHTML=flameFx(sn,20)+'<b class="num">'+sn+'</b>';andStreakWarn(sn)}
+/* Android: system alarm at 9 pm that warns you you're about to lose your streak (cancelled/moved by opening the app and achieving something) */
+var SWK='';
+function andStreakWarn(n){try{
+  var B=window.AndroidBridge;if(!B||!B.scheduleStreakWarn||!USER)return;
+  if(!(n>0)){if(SWK!=='off'){SWK='off';if(B.cancelStreakWarn)B.cancelStreakWarn()}return}
+  var now=new Date(),y=now.getFullYear(),m=now.getMonth(),d=now.getDate(),done=actOn(today()),
+      at=new Date(y,m,d,21,0,0,0);
+  if(done)at=new Date(y,m,d+1,21,0,0,0);                                   /* safe today: warn tomorrow evening if still nothing */
+  else if(now>=at)at=now<new Date(y,m,d,23,0,0,0)?new Date(y,m,d,23,0,0,0):new Date(y,m,d+1,21,0,0,0);
+  var k=at.getTime()+'|'+n+'|'+S.lang;if(k===SWK)return;SWK=k;
+  var dw=daysW(n);
+  B.scheduleStreakWarn(at.getTime(),t('app'),
+    pkL('ستفقد تقدمك 🔥 ستريكك '+n+' '+dw+' بيضيع عند منتصف الليل. أنجز مهمة أو جلسة قصيرة وتنحفظ.','You are about to lose your progress 🔥 your '+n+'-'+dw+' streak ends at midnight. Finish a task or a short session to keep it.'),
+    pkL('فاتك يوم وستفقد تقدمك 🔥 ارجع وابدأ ستريك جديد اليوم.','You missed a day and are losing your progress 🔥 come back and start a new streak today.'))}catch(e){}}
 /* clock opposite the date: 12-hour, ص/م in Arabic and am/pm in English */
 function updateClock(){
   var c=document.getElementById('dlT');if(!c)return;

@@ -20,12 +20,16 @@ object AlarmScheduler {
     const val KIND_NEWDAY = "newday"
     const val TAG_BREAK = "break-end"
     const val TAG_NEWDAY = "new-day"
+    const val KIND_STREAK = "streak"
+    const val TAG_STREAK = "streak-warn"
 
     private const val PREFS = "mz_alarms"
     private const val REQ_TIMER = 7101
     private const val REQ_DAILY = 7102
     private const val REQ_BREAK = 7103
     private const val REQ_NEWDAY = 7104
+    private const val REQ_STREAK = 7105
+    private const val DAY_MS = 24L * 60 * 60 * 1000
 
     private fun prefs(c: Context) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -130,6 +134,40 @@ object AlarmScheduler {
         scheduleNewDay(c, p.getString("newday_title", "") ?: "", p.getString("newday_body", "") ?: "")
     }
 
+    // ---- streak warning ("you will lose your progress") ----
+    /**
+     * One alarm at [at]. If the page is not opened again the alarm repeats on the next
+     * 2 days with [body2] ("you missed a day"), then stops until the app is opened.
+     */
+    fun scheduleStreakWarn(c: Context, at: Long, title: String, body: String, body2: String) {
+        if (at <= System.currentTimeMillis()) return
+        prefs(c).edit().putLong("streak_at", at).putString("streak_title", title)
+            .putString("streak_body", body).putString("streak_body2", body2)
+            .putInt("streak_chain", 0).apply()
+        setAlarm(c, REQ_STREAK, at, KIND_STREAK, title, body)
+    }
+
+    fun cancelStreakWarn(c: Context) {
+        prefs(c).edit().remove("streak_at").putInt("streak_chain", 0).apply()
+        cancelAlarm(c, REQ_STREAK, KIND_STREAK)
+    }
+
+    /** The warning fired: queue the next day's reminder (max 2 follow-ups). */
+    fun onStreakFired(c: Context) {
+        val p = prefs(c)
+        val at = p.getLong("streak_at", 0L)
+        val chain = p.getInt("streak_chain", 0) + 1
+        if (at <= 0L || chain > 2) {
+            p.edit().remove("streak_at").putInt("streak_chain", 0).apply()
+            return
+        }
+        var next = at + DAY_MS
+        while (next <= System.currentTimeMillis()) next += DAY_MS
+        p.edit().putLong("streak_at", next).putInt("streak_chain", chain).apply()
+        val body2 = p.getString("streak_body2", "") ?: ""
+        setAlarm(c, REQ_STREAK, next, KIND_STREAK, p.getString("streak_title", "") ?: "", body2)
+    }
+
     // ---- daily reminder ----
     fun scheduleDaily(c: Context, hour: Int, minute: Int, title: String, body: String) {
         prefs(c).edit().putBoolean("daily_on", true).putInt("daily_h", hour).putInt("daily_m", minute)
@@ -183,6 +221,14 @@ object AlarmScheduler {
             )
         } else {
             p.edit().remove("break_at").apply()
+        }
+        val sAt = p.getLong("streak_at", 0L)
+        if (sAt > System.currentTimeMillis()) {
+            val chain = p.getInt("streak_chain", 0)
+            setAlarm(
+                c, REQ_STREAK, sAt, KIND_STREAK, p.getString("streak_title", "") ?: "",
+                (if (chain == 0) p.getString("streak_body", "") else p.getString("streak_body2", "")) ?: ""
+            )
         }
         if (p.getBoolean("daily_on", false)) onDailyFired(c)
         onNewDayFired(c)

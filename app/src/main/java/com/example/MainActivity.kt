@@ -390,6 +390,16 @@ class MainActivity : ComponentActivity() {
         }
 
         @JavascriptInterface
+        fun scheduleStreakWarn(atMs: Long, title: String, body: String, body2: String) {
+            AlarmScheduler.scheduleStreakWarn(context.applicationContext, atMs, title, body, body2)
+        }
+
+        @JavascriptInterface
+        fun cancelStreakWarn() {
+            AlarmScheduler.cancelStreakWarn(context.applicationContext)
+        }
+
+        @JavascriptInterface
         fun cancelNewDay() {
             AlarmScheduler.cancelNewDay(context.applicationContext)
         }
