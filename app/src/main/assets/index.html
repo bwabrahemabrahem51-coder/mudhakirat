@@ -897,6 +897,8 @@ html.sa #splash{display:flex}
 .sch{display:grid;grid-template-columns:22px repeat(var(--c),minmax(0,1fr));gap:5px;align-items:stretch}
 .sch .dh{font-size:calc(11px*var(--fs,1));font-weight:700;color:var(--muted);text-align:center;padding:6px 0;border-radius:10px}
 .sch .dh.td{color:var(--accent-text);background:var(--soft)}
+.sch button.dh{border:0;background:none;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sch button.dh.td{background:var(--soft)}
 .sch .pn{display:grid;place-items:center;font-size:calc(11px*var(--fs,1));color:var(--muted);font-weight:700}
 .sch .sc{min-height:48px;border-radius:12px;border:1.5px dashed var(--line);background:none;padding:3px;font:inherit;font-size:calc(11px*var(--fs,1));font-weight:700;line-height:1.25;color:var(--ink);word-break:break-word;display:grid;place-items:center;overflow:hidden;text-align:center}
 .sch .sc.f{border:0;background:color-mix(in srgb,var(--c) 20%,var(--surface));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--c) 55%,transparent)}
@@ -1117,7 +1119,7 @@ function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp
 
 var SCHEMA=3,SYNCING=false;
 function seed(){
-  return {v:SCHEMA,lang:'ar',view:'home',sched:{n:7,sat:false,cells:{}},notes:[],fid:'',settings:{focus:25,brk:5,goal:120},subjects:[],tasks:[],logs:[],reviews:[],lists:[],theme:'',palette:ThemeManager.PALETTES[0].id,layout:'auto',onboarded:false};
+  return {v:SCHEMA,lang:'ar',view:'home',sched:{n:7,sat:false,days:[0,1,2,3,4],cells:{}},notes:[],fid:'',settings:{focus:25,brk:5,goal:120},subjects:[],tasks:[],logs:[],reviews:[],lists:[],theme:'',palette:ThemeManager.PALETTES[0].id,layout:'auto',onboarded:false};
 }
 /* ---- state migration: every load (and every import) passes through here, so old or damaged data can never break the UI ---- */
 function ext(a,b){for(var k in b)a[k]=b[k];return a}
@@ -1147,6 +1149,10 @@ function migrate(raw){
   o.arDigits=!!o.arDigits;
   var sc=o.sched&&typeof o.sched==='object'?o.sched:{};
   o.sched={n:Math.min(12,Math.max(1,parseInt(sc.n,10)||7)),sat:!!sc.sat,cells:{}};
+  /* days shown in the weekly table: saved choice, or (old data) Sun–Thu plus Saturday if it was on */
+  var SD=[6,0,1,2,3,4,5],dy=Array.isArray(sc.days)?SD.filter(function(d){return sc.days.indexOf(d)>=0}):[];
+  if(!dy.length)dy=sc.sat?[6,0,1,2,3,4]:[0,1,2,3,4];
+  o.sched.days=dy;o.sched.sat=dy.indexOf(6)>=0;
   if(sc.cells&&typeof sc.cells==='object')for(var ck in sc.cells){if(/^\d-\d{1,2}$/.test(ck)&&sc.cells[ck]&&String(sc.cells[ck].t||'').trim())o.sched.cells[ck]={t:String(sc.cells[ck].t).slice(0,30)}}
   o.notes=arr(o.notes).filter(function(n){return n&&String(n.txt||'').trim()}).map(function(n){return {id:n.id||uid(),title:String(n.title||'').slice(0,60),txt:String(n.txt).slice(0,600),color:n.color||COLORS[5],pin:!!n.pin,ts:+n.ts||0}});
   o.fid=/^[A-Z0-9]{8}$/.test(o.fid||'')?o.fid:'';
@@ -3002,11 +3008,12 @@ function vHub(){
 function hubOpened(){if(!FR.t||Date.now()-FR.t>20000){FR.t=Date.now();frLoad()}}
 
 /* ---------- 1) weekly schedule ---------- */
-function schedCols(){return S.sched.sat?[6,0,1,2,3,4]:[0,1,2,3,4]}
+var SCH_ORDER=[6,0,1,2,3,4,5];   /* Sat Sun Mon Tue Wed Thu Fri */
+function schedCols(){var d=S.sched.days;return SCH_ORDER.filter(function(x){return d&&d.indexOf(x)>=0}).length?SCH_ORDER.filter(function(x){return d.indexOf(x)>=0}):[0,1,2,3,4]}
 function schedCard(){
   var sc=S.sched,cols=schedCols(),td=new Date().getDay(),ar=S.lang==='ar',dn=ar?DAYS_AR:DAYS_EN,h='',any=false,p,c;
-  h+='<div class="sh"><h2 class="hubh">'+ic('week',20)+pkL('الجدول الأسبوعي','Weekly schedule')+'</h2><button type="button" class="chip" data-a="schsat" aria-pressed="'+sc.sat+'">'+pkL('السبت','Sat')+'</button></div>';
-  h+='<div class="sch" style="--c:'+cols.length+'"><span></span>'+cols.map(function(d){return '<div class="dh'+(d===td?' td':'')+'">'+dn[d]+'</div>'}).join('');
+  h+='<div class="sh"><h2 class="hubh">'+ic('week',20)+pkL('الجدول الأسبوعي','Weekly schedule')+'</h2><button type="button" class="chip" data-a="schdays">'+pkL('الأيام','Days')+'</button></div>';
+  h+='<div class="sch" style="--c:'+cols.length+'"><span></span>'+cols.map(function(d){return '<button type="button" class="dh'+(d===td?' td':'')+'" data-a="schdays" aria-label="'+esc(pkL('اختيار الأيام','Choose days'))+'">'+dn[d]+'</button>'}).join('');
   for(p=0;p<sc.n;p++){
     h+='<div class="pn num">'+(p+1)+'</div>';
     for(c=0;c<cols.length;c++){
@@ -3164,6 +3171,11 @@ function notesCard(){
 function hubSheet(k){
   if(k==='streak')return stkSheet();
   if(k==='chat')return chSheet();
+  if(k==='schdays'){
+    var dl=S.lang==='ar'?DAYS_AR_L:DAYS_EN_L,sd=S.sched.days||[];
+    return '<h2>'+pkL('اختر أيام الجدول','Choose schedule days')+'</h2><p class="small muted">'+pkL('اضغط على اليوم لإظهاره أو إخفائه. جدولك المحفوظ لا يضيع عند الإخفاء.','Tap a day to show or hide it. Your saved subjects are kept when hidden.')+'</p>'+
+     '<div class="sw2 dsel">'+SCH_ORDER.map(function(d){return '<button type="button" class="chip" data-a="schday" data-id="'+d+'" aria-pressed="'+(sd.indexOf(d)>=0)+'">'+esc(dl[d])+'</button>'}).join('')+'</div>'+
+     '<button class="btn" type="button" data-a="schdone" style="width:100%;margin-top:16px">'+pkL('تم','Done')+'</button>'}
   if(k==='schcell'){
     var key=UI.schKey||'0-0',pr=key.split('-'),dn=(S.lang==='ar'?DAYS_AR_L:DAYS_EN_L)[+pr[0]]||'',cur=(S.sched.cells[key]||{}).t||'';
     return '<h2>'+esc(dn)+' · '+pkL('الحصة','Period')+' '+((+pr[1])+1)+'</h2><form id="fSch"><label class="f">'+pkL('المادة','Subject')+'<input type="text" id="scT" maxlength="30" value="'+esc(cur)+'" autocomplete="off" placeholder="'+esc(pkL('مثال: رياضيات','e.g. Math'))+'"></label>'+
@@ -3194,7 +3206,13 @@ document.addEventListener('click',function(e){
   else if(a==='ntile'){var tl=nowTiles()[+id];if(tl){FR.nsel=tl.n;paintFr()}}
   else if(a==='ndur'){FR.nd=+id;paintFr()}
   else if(a==='nowend'){S.nowT='';S.nowAt=0;save();paintFr();frRpc('set_status',{p_text:''}).catch(frErr).then(function(){frLoad()})}
-  else if(a==='schsat'){S.sched.sat=!S.sched.sat;render()}
+  else if(a==='schdays'){openSheet('schdays')}
+  else if(a==='schday'){var dd=+id,ds=(S.sched.days||[]).slice(),ix=ds.indexOf(dd);
+    if(ix>=0){if(ds.length>1)ds.splice(ix,1)}else ds.push(dd);
+    S.sched.days=SCH_ORDER.filter(function(x){return ds.indexOf(x)>=0});S.sched.sat=S.sched.days.indexOf(6)>=0;
+    var sbd=document.getElementById('sheetBody');if(sbd){sbd.innerHTML=sheetHtml('schdays')}
+    save();render()}
+  else if(a==='schdone'){closeSheet()}
   else if(a==='schn'){S.sched.n=Math.min(12,Math.max(1,S.sched.n+(+id)));
     for(var ck in S.sched.cells){if(+ck.split('-')[1]>=S.sched.n)delete S.sched.cells[ck]}render()}
   else if(a==='scpick'){var inp=document.getElementById('scT'),sb=S.subjects[+id];if(inp&&sb){inp.value=sb.name;UI.dirty=true}}
