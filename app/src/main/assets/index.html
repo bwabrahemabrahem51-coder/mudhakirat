@@ -1136,7 +1136,7 @@ function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp
 
 var SCHEMA=3,SYNCING=false;
 function seed(){
-  return {v:SCHEMA,lang:'ar',view:'home',sched:{n:7,sat:false,days:[0,1,2,3,4],cells:{}},act:{},notes:[],fid:'',settings:{focus:25,brk:5,goal:120},subjects:[],tasks:[],logs:[],reviews:[],lists:[],theme:'',palette:ThemeManager.PALETTES[0].id,layout:'auto',onboarded:false};
+  return {v:SCHEMA,lang:'ar',view:'home',sched:{n:7,sat:false,days:[0,1,2,3,4],cells:{}},act:{},lockDone:true,notes:[],fid:'',settings:{focus:25,brk:5,goal:120},subjects:[],tasks:[],logs:[],reviews:[],lists:[],theme:'',palette:ThemeManager.PALETTES[0].id,layout:'auto',onboarded:false};
 }
 /* ---- state migration: every load (and every import) passes through here, so old or damaged data can never break the UI ---- */
 function ext(a,b){for(var k in b)a[k]=b[k];return a}
@@ -1165,7 +1165,7 @@ function migrate(raw){
   o.taskSort=o.taskSort==='manual'?'manual':'auto';
   o.taskView=o.taskView==='week'?'week':'list';
   o.progRange=o.progRange==='month'?'month':'week';
-  o.arDigits=!!o.arDigits;
+  o.arDigits=!!o.arDigits;o.lockDone=o.lockDone!==false;
   var sc=o.sched&&typeof o.sched==='object'?o.sched:{};
   o.sched={n:Math.min(12,Math.max(1,parseInt(sc.n,10)||7)),sat:!!sc.sat,cells:{}};
   /* days shown in the weekly table: saved choice, or (old data) Sun–Thu plus Saturday if it was on */
@@ -1205,6 +1205,9 @@ function minsOn(date,sid){var n=0;S.logs.forEach(function(l){if(l.date===date&&(
 function weekMins(sid){var n=0;for(var i=0;i<7;i++)n+=minsOn(addDays(-i),sid);return n}
 /* a day counts for the streak if ANY achievement happened: study minutes (timer / focused review) or a task / list item / lesson part checked off */
 function actOn(d){return minsOn(d)>0||!!(S.act&&S.act[d])}
+/* "lock achievements": once checked off, an achievement can't be undone or edited (can be turned off in settings) */
+function locked(){return S.lockDone!==false}
+function lockMsg(){showToast(pkL('الإنجاز مقفل 🔒 ما تكدر تتراجع عنه','Achievement locked 🔒 it can’t be undone'))}
 function markAct(){S.act=S.act||{};var d0=today();if(S.act[d0])return;S.act[d0]=1;var ks=Object.keys(S.act).sort();while(ks.length>400)delete S.act[ks.shift()]}
 function streak(){var n=0,i=actOn(today())?0:1;while(actOn(addDays(-i))){n++;i++}return n}
 /* ---- flame that grows every 4 days: spark → glowing ember → flame → strong flame → big fire → blazing fire ---- */
@@ -1625,6 +1628,7 @@ function sheetHtml(k){
     '<div class="sect" id="thBox"><h3>'+t('themeT')+'</h3><button type="button" class="pk thbtn" data-a="themepop" aria-haspopup="dialog">'+themeDots()+'<span class="thcur" id="thCur">'+esc(themeName())+'</span></button></div>'+
     '<div class="sect"><h3>'+pkL('اللغة','Language')+'</h3><select id="lgSel" class="thsel" aria-label="'+esc(pkL('اللغة','Language'))+'">'+[['ar','العربية'],['en','English']].map(function(o){return '<option value="'+o[0]+'"'+(S.lang===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'+
     (S.lang==='ar'?'<div class="sect"><h3>الأرقام</h3><label class="row" style="gap:10px;font-weight:700"><input type="checkbox" id="aDig"'+(S.arDigits?' checked':'')+'>استخدم الأرقام العربية (٠١٢٣)</label></div>':'')+
+    '<div class="sect"><h3>'+pkL('قفل الإنجازات','Lock achievements')+'</h3><label class="row" style="gap:10px;font-weight:700"><input type="checkbox" id="aLock"'+(locked()?' checked':'')+'>'+pkL('لا يمكن التراجع عن الإنجاز بعد علامة ✓ ولا تعديله','Achievements can’t be undone or edited after ✓')+'</label></div>'+
     remindSect()+fullSect()+installSect()+'<div class="sect"><h3>'+pkL('طباعة / PDF','Print / PDF')+'</h3><button type="button" class="btn ghost prbtn" data-a="print">'+ic('print',20)+'<span>'+pkL('طباعة الجدول أو حفظه PDF','Print schedule or save as PDF')+'</span></button><div class="small muted">'+pkL('من نافذة الطباعة اختر «حفظ بصيغة PDF».','In the print dialog choose “Save as PDF”.')+'</div></div>'+
     '<div class="sect"><h3>'+t('exportT')+'</h3><div class="prow2"><button type="button" class="btn ghost" data-a="xls" style="height:44px;font-size:calc(14px*var(--fs,1));padding-inline:16px">'+ic('table',18)+'&nbsp;'+t('xlsBtn')+'</button><button type="button" class="btn ghost" data-a="csvtasks" style="height:44px;font-size:calc(14px*var(--fs,1));padding-inline:16px">'+t('csvTasks')+'</button><button type="button" class="btn ghost" data-a="csvlog" style="height:44px;font-size:calc(14px*var(--fs,1));padding-inline:16px">'+t('csvLog')+'</button><button type="button" class="btn ghost" data-a="ics" style="height:44px;font-size:calc(14px*var(--fs,1));padding-inline:16px">'+pkL('تقويم ICS للمهام','Calendar (.ics)')+'</button></div></div>'+
     '<div class="sect"><h3>'+t('backupT')+'</h3><div class="prow2"><button type="button" class="btn ghost" data-a="export" style="height:44px;font-size:calc(14px*var(--fs,1));padding-inline:18px">'+t('expBtn')+'</button><label class="btn ghost" for="impFile">'+t('impBtn')+'</label><input type="file" id="impFile" accept="application/json,.json"></div><div class="small muted">'+t('backupHint')+'</div></div>'+
@@ -1829,7 +1833,7 @@ function closeSheetSafe(){
 function markDirty(e){
   var n=e.target;
   if(!UI.sheet||/^(settings|welcome|subjtype)$/.test(UI.sheet)||!n.closest||!n.closest('#sheetBody'))return;
-  if(/^(rOn|rTime|rSubj|impFile|pwCur|pwNew|aDig|aFull|thSel|palSel|fsSel|lgSel|lySel)$/.test(n.id))return;
+  if(/^(rOn|rTime|rSubj|impFile|pwCur|pwNew|aDig|aLock|aFull|thSel|palSel|fsSel|lgSel|lySel)$/.test(n.id))return;
   UI.dirty=true}
 document.addEventListener('input',markDirty);document.addEventListener('change',markDirty);
 function closeSheet(){if(typeof pkClose==='function')pkClose();if(UI.sheet==='welcome'&&S.onboarded===false){S.onboarded=true;save()}UI.sheet='';UI.presetDue='';UI.dirty=false;UI.editRv='';UI.editTaskId='';document.getElementById('sheet').classList.remove('open');document.getElementById('scrim').classList.remove('open');mmClose(document.getElementById('sheet'))}
@@ -2634,7 +2638,7 @@ document.addEventListener('click',function(e){
   else if(a==='pickkind'){UI.editId='';UI.editRv='';if(id==='rev'){UI.rvKind='rev';openSheet('review')}else{UI.lkKind=id;openSheet('topics')}}
   else if(a==='addtopic'){var tr=document.getElementById('tpRows');tr.insertAdjacentHTML('beforeend',tpRow(UI.lkKind==='hw'?'hw':'misc'));tr.lastElementChild.focus();UI.dirty=true}
   else if(a==='liadd'){UI.lkKind=id;openSheet('topics')}
-  else if(a==='litog'){var li=(S.lists||[]).filter(function(x){return x.id===id})[0];if(!li)return;li.done=!li.done;if(li.done)markAct();render()}
+  else if(a==='litog'){var li=(S.lists||[]).filter(function(x){return x.id===id})[0];if(!li)return;if(li.done&&locked()){lockMsg();return}li.done=!li.done;if(li.done)markAct();render()}
   else if(a==='lidel'){
     var lx=(S.lists||[]),lj=-1,lo=null;lx.forEach(function(x,i){if(x.id===id){lj=i;lo=x}});if(!lo)return;
     S.lists=lx.filter(function(x){return x.id!==id});render();
@@ -2651,7 +2655,7 @@ document.addEventListener('click',function(e){
     if(dr0)showUndo(pkL('تم حذف المراجعة','Review deleted'),function(){S.reviews=S.reviews||[];S.reviews.splice(Math.min(dri,S.reviews.length),0,dr0);render()})}
   else if(a==='rvdone'){
     var rv=findRv(id);if(!rv)return;var ri=rvInfo(rv);
-    if(rv.day&&rv.day.date===today()){rv.doneH=Math.max(0,(rv.doneH||0)-rv.day.amt);S.logs=S.logs.filter(function(l){return l.id!==rv.day.logId});rv.day=null;if(rv.dd)delete rv.dd[today()]}
+    if(rv.day&&rv.day.date===today()){if(locked()){lockMsg();return}rv.doneH=Math.max(0,(rv.doneH||0)-rv.day.amt);S.logs=S.logs.filter(function(l){return l.id!==rv.day.logId});rv.day=null;if(rv.dd)delete rv.dd[today()]}
     else{var am=Math.round(ri.share*60/5)*5/60;if(am>ri.rem)am=ri.rem;if(!(am>0))return;
       var lg=uid();rv.doneH=(rv.doneH||0)+am;S.logs.push({id:lg,subj:'',min:Math.round(am*60),date:today()});rv.day={date:today(),amt:am,logId:lg};rv.dd=rv.dd||{};rv.dd[today()]=1}
     render()}
@@ -2660,8 +2664,8 @@ document.addEventListener('click',function(e){
   else if(a==='fs'){var ni=FS.i+(id==='inc'?1:-1);if(ni>=0&&ni<FS.L.length){FS.i=ni;fsApply()}}
   else if(a==='layout'){S.layout=id;save();applyLayout();[].forEach.call(document.querySelectorAll('[data-a=layout]'),function(b){b.setAttribute('aria-pressed',b.getAttribute('data-id')===id)});render();requestAnimationFrame(placeInd)}
   else if(a==='theme'||a==='themepop'){openThemePop()}
-  else if(a==='pdone'){var pp=id.split('|'),sbj=subj(pp[0]);if(!sbj)return;(sbj.parts||[]).forEach(function(q){if(q.id===pp[1]){q.done=!q.done;if(q.done)markAct()}});render()}
-  else if(a==='edittask'){UI.editTaskId=id;openSheet('task')}
+  else if(a==='pdone'){var pp=id.split('|'),sbj=subj(pp[0]);if(!sbj)return;var pq=(sbj.parts||[]).filter(function(q){return q.id===pp[1]})[0];if(pq&&pq.done&&locked()){lockMsg();return}(sbj.parts||[]).forEach(function(q){if(q.id===pp[1]){q.done=!q.done;if(q.done)markAct()}});render()}
+  else if(a==='edittask'){var et=S.tasks.filter(function(x){return x.id===id})[0];if(et&&et.done&&locked()){lockMsg();return}UI.editTaskId=id;openSheet('task')}
   else if(a==='toastx'){document.getElementById('toast').classList.remove('show')}
   else if(a==='fab'){UI.editId='';UI.editTaskId='';UI.presetDue='';if(S.view==='subjects')UI.newColor=UI.newColor||COLORS[3];UI.editRv='';openSheet(S.view==='subjects'?'subjtype':'task')}
   else if(a==='adddef'){add6();render(true)}
@@ -2671,6 +2675,7 @@ document.addEventListener('click',function(e){
   else if(a==='sdone'){
     var sb=subj(id);if(!sb)return;var inf=planInfo();
     if(sb.day&&sb.day.date===today()){
+      if(locked()){lockMsg();return}
       sb.doneH=Math.max(0,(sb.doneH||0)-sb.day.amt);
       S.logs=S.logs.filter(function(l){return l.id!==sb.day.logId});sb.day=null}
     else{
@@ -2683,7 +2688,7 @@ document.addEventListener('click',function(e){
   else if(a==='sheet'){openSheet(id)}
   else if(a==='close'){closeSheetSafe()}
   else if(a==='toggle'){
-    var k=S.tasks.filter(function(x){return x.id===id})[0];if(!k)return;k.done=!k.done;if(k.done)markAct();save();
+    var k=S.tasks.filter(function(x){return x.id===id})[0];if(!k)return;if(k.done&&locked()){lockMsg();return}k.done=!k.done;if(k.done)markAct();save();
     var row=el.closest('.trow');row.classList.toggle('done',k.done);el.setAttribute('aria-checked',k.done);
     el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');
     clearTimeout(rt);rt=setTimeout(function(){render()},550)}
@@ -3016,6 +3021,7 @@ if(window.MutationObserver)new MutationObserver(function(recs){
     else[].forEach.call(r.addedNodes,function(n){if(n.nodeType===3)convText(n);else if(n.nodeType===1)convTree(n)})})
 }).observe(document.body,{childList:true,subtree:true,characterData:true});
 document.addEventListener('change',function(e){
+  if(e.target.id==='aLock'){S.lockDone=e.target.checked;save();return}
   if(e.target.id!=='aDig')return;
   S.arDigits=e.target.checked;save();
   convTree(document.body,!S.arDigits);render()});
