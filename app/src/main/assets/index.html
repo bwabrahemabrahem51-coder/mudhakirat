@@ -705,6 +705,23 @@ button.strk:active{transform:scale(.95)}
 .chf{display:flex;gap:8px}
 .chf input{flex:1;min-width:0;height:46px;border-radius:99px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);padding-inline:16px;font:inherit}
 .chf .btn{flex:none;width:auto;padding-inline:20px}
+/* ===== streak flame (stage = floor(days/4), max 5) ===== */
+.fx{position:relative;display:inline-block;width:var(--sz);height:var(--sz);flex:none;line-height:0;vertical-align:middle}
+.fx svg{display:block;width:100%;height:100%;overflow:visible;filter:var(--g,none);transform-origin:50% 88%;transform:scale(var(--sc,1));animation:fxf var(--dur,2.4s) ease-in-out infinite}
+.fx::before{content:"";position:absolute;inset:-30%;border-radius:50%;background:radial-gradient(circle,rgba(255,140,40,.55),transparent 62%);opacity:var(--gl,0);animation:fxg var(--dur,2.4s) ease-in-out infinite;pointer-events:none}
+.fx .sp{position:absolute;left:50%;top:34%;width:max(2px,calc(var(--sz)*.055));height:max(2px,calc(var(--sz)*.055));margin-left:-1px;border-radius:50%;background:#FFC531;box-shadow:0 0 4px #FF8A1F;opacity:0;animation:fxsp 1.7s ease-out infinite;animation-delay:var(--dl,0s)}
+.fx.s0{--a:#7A4A2E;--b:#E8832A;--sc:.72;--dur:3s}
+.fx.s1{--a:#E8561A;--b:#FFA52E;--c:#FFC24A;--d:#FFE08A;--g:drop-shadow(0 0 3px rgba(255,150,40,.65));--sc:.84;--dur:2.3s;--gl:.12}
+.fx.s2{--a:#E04312;--b:#FF9A2A;--c:#FFC93C;--d:#FFF0A0;--g:drop-shadow(0 0 5px rgba(255,140,30,.8));--sc:.94;--dur:1.6s;--gl:.25}
+.fx.s3{--a:#D93211;--b:#FF8A20;--c:#FFC23A;--d:#FFF4B0;--g:drop-shadow(0 0 7px rgba(255,110,20,.9));--sc:1;--dur:1.2s;--gl:.4}
+.fx.s4{--a:#C9240E;--b:#FF7A18;--c:#FFC531;--d:#FFF8C8;--g:drop-shadow(0 0 6px rgba(255,100,20,.95)) drop-shadow(0 0 14px rgba(255,70,10,.55));--sc:1.08;--dur:.95s;--gl:.6}
+.fx.s5{--a:#B91808;--b:#FF6A10;--c:#FFC22A;--d:#FFFFFF;--g:drop-shadow(0 0 8px rgba(255,90,10,1)) drop-shadow(0 0 20px rgba(255,60,0,.75));--sc:1.16;--dur:.7s;--gl:.9}
+@keyframes fxf{0%,100%{transform:scale(var(--sc)) rotate(-1.5deg)}50%{transform:scale(calc(var(--sc)*1.07)) rotate(1.5deg)}}
+@keyframes fxg{0%,100%{transform:scale(.9)}50%{transform:scale(1.12)}}
+@keyframes fxsp{0%{opacity:0;transform:translate(0,0)}15%{opacity:1}100%{opacity:0;transform:translate(var(--dx,0),calc(var(--sz)*-.95))}}
+.stkf2{display:inline-grid;place-items:center;padding:10px 0 2px}
+.stkst2{font-size:calc(12.5px*var(--fs,1));font-weight:700;color:var(--hot);margin-top:2px}
+.strk .fx{margin-inline-end:-1px}
 @keyframes stkpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
 @keyframes stkfall{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--r))}}
 @media (prefers-reduced-motion:reduce){.stkf{animation:none}.stkc{display:none}}
@@ -1119,7 +1136,7 @@ function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp
 
 var SCHEMA=3,SYNCING=false;
 function seed(){
-  return {v:SCHEMA,lang:'ar',view:'home',sched:{n:7,sat:false,days:[0,1,2,3,4],cells:{}},notes:[],fid:'',settings:{focus:25,brk:5,goal:120},subjects:[],tasks:[],logs:[],reviews:[],lists:[],theme:'',palette:ThemeManager.PALETTES[0].id,layout:'auto',onboarded:false};
+  return {v:SCHEMA,lang:'ar',view:'home',sched:{n:7,sat:false,days:[0,1,2,3,4],cells:{}},act:{},notes:[],fid:'',settings:{focus:25,brk:5,goal:120},subjects:[],tasks:[],logs:[],reviews:[],lists:[],theme:'',palette:ThemeManager.PALETTES[0].id,layout:'auto',onboarded:false};
 }
 /* ---- state migration: every load (and every import) passes through here, so old or damaged data can never break the UI ---- */
 function ext(a,b){for(var k in b)a[k]=b[k];return a}
@@ -1139,6 +1156,8 @@ function migrate(raw){
   o.logs=arr(o.logs).filter(function(l){return l&&dre.test(l.date||'')&&+l.min>0}).map(function(l){l=ext({},l);l.id=l.id||uid();l.min=+l.min;l.subj=l.subj||'';return l});
   o.reviews=arr(o.reviews).filter(function(r){return r&&r.name&&+r.hours>0&&+r.days>0}).map(function(r,i){
     r=ext({},r);r.id=r.id||uid();r.hours=+r.hours;r.days=+r.days;r.start=dre.test(r.start||'')?r.start:today();r.ext=+r.ext||0;r.doneH=+r.doneH||0;r.dd=r.dd&&typeof r.dd==='object'?r.dd:{};r.color=r.color||COLORS[i%COLORS.length];r.kind=({misc:1,hw:1})[r.kind]?r.kind:'rev';return r});
+  var ac0=o.act&&typeof o.act==='object'?o.act:{};o.act={};
+  for(var ak in ac0){if(dre.test(ak)&&ac0[ak])o.act[ak]=1}
   o.lists=arr(o.lists).filter(function(l){return l&&l.name}).map(function(l){return {id:l.id||uid(),kind:l.kind==='hw'?'hw':'misc',name:String(l.name),done:!!l.done}});
   if(o.remind&&typeof o.remind==='object')o.remind.on=false;
   o.theme=ThemeManager.hasTheme(o.theme)?o.theme:'';o.palette=ThemeManager.hasPalette(o.palette)?o.palette:ThemeManager.PALETTES[0].id;
@@ -1184,7 +1203,24 @@ var LAST={},D=0,CT=2*Math.PI*112,CHR=2*Math.PI*54;
 
 function minsOn(date,sid){var n=0;S.logs.forEach(function(l){if(l.date===date&&(!sid||l.subj===sid))n+=l.min});return n}
 function weekMins(sid){var n=0;for(var i=0;i<7;i++)n+=minsOn(addDays(-i),sid);return n}
-function streak(){var n=0,i=minsOn(today())>0?0:1;while(minsOn(addDays(-i))>0){n++;i++}return n}
+/* a day counts for the streak if ANY achievement happened: study minutes (timer / focused review) or a task / list item / lesson part checked off */
+function actOn(d){return minsOn(d)>0||!!(S.act&&S.act[d])}
+function markAct(){S.act=S.act||{};var d0=today();if(S.act[d0])return;S.act[d0]=1;var ks=Object.keys(S.act).sort();while(ks.length>400)delete S.act[ks.shift()]}
+function streak(){var n=0,i=actOn(today())?0:1;while(actOn(addDays(-i))){n++;i++}return n}
+/* ---- flame that grows every 4 days: spark → glowing ember → flame → strong flame → big fire → blazing fire ---- */
+var FXN=0,FX_P='M12 3c1 3.5 5 5.5 5 10a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z';
+function fxStage(n){return Math.min(5,Math.max(0,Math.floor((n||0)/4)))}
+var FX_NAME_AR=['شرارة','جمرة متوهجة','لهب مشتعل','لهب قوي','نار كبيرة','نار مشتعلة قوية'],FX_NAME_EN=['Spark','Glowing ember','Burning flame','Strong flame','Big fire','Blazing fire'];
+function fxName(n){var i=fxStage(n);return (S.lang==='ar'?FX_NAME_AR:FX_NAME_EN)[i]}
+function flameFx(n,size){
+  var s=fxStage(n),id='fxg'+(++FXN),sp='',k=s>=5?5:s>=4?3:0,i;
+  for(i=0;i<k;i++)sp+='<i class="sp" style="--dx:'+[-6,5,-2,7,-4][i]+'px;--dl:'+(i*.34)+'s"></i>';
+  return '<span class="fx s'+s+'" style="--sz:'+(size||18)+'px" aria-hidden="true"><svg viewBox="0 0 24 24"><defs>'+
+   '<linearGradient id="'+id+'o" x1="0" y1="1" x2="0" y2="0"><stop offset="0" style="stop-color:var(--a)"/><stop offset="1" style="stop-color:var(--b)"/></linearGradient>'+
+   '<linearGradient id="'+id+'i" x1="0" y1="1" x2="0" y2="0"><stop offset="0" style="stop-color:var(--c)"/><stop offset="1" style="stop-color:var(--d)"/></linearGradient></defs>'+
+   '<path d="'+FX_P+'" fill="url(#'+id+'o)"/>'+
+   (s>=1?'<path d="'+FX_P+'" transform="translate(12 18) scale('+(s>=5?.62:.5)+') translate(-12 -18)" fill="url(#'+id+'i)"/>':'')+
+   '</svg>'+sp+'</span>'}
 function fmtMin(m){if(m<60)return m+' '+t('min');var h=Math.floor(m/60),r=m%60;return h+' '+t('hrs')+(r?' '+r+' '+t('min'):'')}
 function mmss(s){s=Math.max(0,s);var m=Math.floor(s/60),x=s%60;return (m<10?'0':'')+m+':'+(x<10?'0':'')+x}
 function subjOpts(sel){var o='';S.subjects.forEach(function(s){o+='<option value="'+s.id+'"'+(s.id===sel?' selected':'')+'>'+esc(s.name)+'</option>'});return o+'<option value=""'+(!sel?' selected':'')+'>'+esc(t('noSubj'))+'</option>'}
@@ -1538,7 +1574,7 @@ function progWeek(){
   for(i=6;i>=0;i--){var k=addDays(-i),m=minsOn(k);days.push({k:k,m:m,t:i===0});tot+=m;if(m>max)max=m}
   var done=S.tasks.filter(function(x){return x.done}).length,pc=S.tasks.length?Math.round(done/S.tasks.length*100):0;
   var h='<div class="kpis"><div class="kpi rise" style="--d:'+(D++)+'"><b class="num" data-n="'+tot+'" data-k="kTot">0</b><span>'+t('min')+' · '+t('thisWeek')+'</span></div>'+
-   '<div class="kpi hot rise" style="--d:'+(D++)+'"><b class="num" style="display:flex;align-items:center;gap:6px">'+ic('flame',24)+'<span data-n="'+streak()+'" data-k="kStr">0</span></b><span>'+t('streak')+'</span></div>'+
+   '<div class="kpi hot rise" style="--d:'+(D++)+'"><b class="num" style="display:flex;align-items:center;gap:6px">'+flameFx(streak(),28)+'<span data-n="'+streak()+'" data-k="kStr">0</span></b><span>'+t('streak')+'</span></div>'+
    '<div class="kpi rise" style="--d:'+(D++)+'"><b class="num" data-n="'+Math.round(tot/7)+'" data-k="kAvg">0</b><span>'+t('min')+' · '+t('avg')+'</span></div>'+
    '<div class="kpi rise" style="--d:'+(D++)+'"><b class="num" data-n="'+pc+'" data-k="kPct" data-sfx="%">0</b><span>'+t('completion')+'</span></div></div>';
   h+=sec('','<div class="sh"><h2>'+t('week')+'</h2></div><div class="days">'+days.map(function(d,ix){
@@ -1910,7 +1946,7 @@ function updateStreak(){
   var e=document.getElementById('strk');if(!e)return;
   if(S.view==='progress'){e.style.display='none';return}
   e.style.display='inline-flex';
-  e.setAttribute('title',t('streak'));e.setAttribute('aria-label',t('streak')+': '+streak());e.innerHTML=ic('flame',18)+'<b class="num">'+streak()+'</b>'}
+  e.setAttribute('title',t('streak'));e.setAttribute('aria-label',t('streak')+': '+streak());var sn=streak();e.innerHTML=flameFx(sn,20)+'<b class="num">'+sn+'</b>'}
 /* clock opposite the date: 12-hour, ص/م in Arabic and am/pm in English */
 function updateClock(){
   var c=document.getElementById('dlT');if(!c)return;
@@ -2584,7 +2620,7 @@ document.addEventListener('click',function(e){
   else if(a==='pickkind'){UI.editId='';UI.editRv='';if(id==='rev'){UI.rvKind='rev';openSheet('review')}else{UI.lkKind=id;openSheet('topics')}}
   else if(a==='addtopic'){var tr=document.getElementById('tpRows');tr.insertAdjacentHTML('beforeend',tpRow(UI.lkKind==='hw'?'hw':'misc'));tr.lastElementChild.focus();UI.dirty=true}
   else if(a==='liadd'){UI.lkKind=id;openSheet('topics')}
-  else if(a==='litog'){var li=(S.lists||[]).filter(function(x){return x.id===id})[0];if(!li)return;li.done=!li.done;render()}
+  else if(a==='litog'){var li=(S.lists||[]).filter(function(x){return x.id===id})[0];if(!li)return;li.done=!li.done;if(li.done)markAct();render()}
   else if(a==='lidel'){
     var lx=(S.lists||[]),lj=-1,lo=null;lx.forEach(function(x,i){if(x.id===id){lj=i;lo=x}});if(!lo)return;
     S.lists=lx.filter(function(x){return x.id!==id});render();
@@ -2610,7 +2646,7 @@ document.addEventListener('click',function(e){
   else if(a==='fs'){var ni=FS.i+(id==='inc'?1:-1);if(ni>=0&&ni<FS.L.length){FS.i=ni;fsApply()}}
   else if(a==='layout'){S.layout=id;save();applyLayout();[].forEach.call(document.querySelectorAll('[data-a=layout]'),function(b){b.setAttribute('aria-pressed',b.getAttribute('data-id')===id)});render();requestAnimationFrame(placeInd)}
   else if(a==='theme'||a==='themepop'){openThemePop()}
-  else if(a==='pdone'){var pp=id.split('|'),sbj=subj(pp[0]);if(!sbj)return;(sbj.parts||[]).forEach(function(q){if(q.id===pp[1])q.done=!q.done});render()}
+  else if(a==='pdone'){var pp=id.split('|'),sbj=subj(pp[0]);if(!sbj)return;(sbj.parts||[]).forEach(function(q){if(q.id===pp[1]){q.done=!q.done;if(q.done)markAct()}});render()}
   else if(a==='edittask'){UI.editTaskId=id;openSheet('task')}
   else if(a==='toastx'){document.getElementById('toast').classList.remove('show')}
   else if(a==='fab'){UI.editId='';UI.editTaskId='';UI.presetDue='';if(S.view==='subjects')UI.newColor=UI.newColor||COLORS[3];UI.editRv='';openSheet(S.view==='subjects'?'subjtype':'task')}
@@ -2633,7 +2669,7 @@ document.addEventListener('click',function(e){
   else if(a==='sheet'){openSheet(id)}
   else if(a==='close'){closeSheetSafe()}
   else if(a==='toggle'){
-    var k=S.tasks.filter(function(x){return x.id===id})[0];if(!k)return;k.done=!k.done;save();
+    var k=S.tasks.filter(function(x){return x.id===id})[0];if(!k)return;k.done=!k.done;if(k.done)markAct();save();
     var row=el.closest('.trow');row.classList.toggle('done',k.done);el.setAttribute('aria-checked',k.done);
     el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');
     clearTimeout(rt);rt=setTimeout(function(){render()},550)}
@@ -3026,7 +3062,7 @@ function schedCard(){
   return sec('',h)}
 
 /* ---------- 2) streak with friends ---------- */
-function myDays(){var m={};S.logs.forEach(function(l){if(l.min>0)m[l.date]=1});return Object.keys(m).sort().slice(-120)}
+function myDays(){var m={};S.logs.forEach(function(l){if(l.min>0)m[l.date]=1});for(var d in (S.act||{}))m[d]=1;return Object.keys(m).sort().slice(-120)}
 function runLen(has){var n=0,i=has(today())?0:1;while(i<400&&has(addDays(-i))){n++;i++}return n}
 function setOf(a){var m={};(a||[]).forEach(function(d){m[d]=1});return m}
 function frIsMissing(e){var m=String(e&&(e.message||e.msg||'')||'');return !!(e&&(e.code==='PGRST202'||e.code==='42883'||/could not find the function|does not exist/i.test(m)))}
@@ -3136,7 +3172,7 @@ function frInner(){
   var me=myDays(),mine=setOf(me),ms=runLen(function(d){return mine[d]}),h='',t0=today();
   h+='<div class="sh"><h2 class="hubh">'+ic('users',20)+pkL('الستريك مع الأصدقاء','Friends streak')+'</h2><button type="button" class="chip" data-a="frref"'+(FR.busy?' disabled':'')+'>'+(FR.busy?pkL('جارٍ التحديث…','Updating…'):pkL('تحديث','Refresh'))+'</button></div>';
   h+='<div class="fr me"><div class="fav">'+esc((profName()||String(USER||'?')).trim().charAt(0).toUpperCase())+'</div><div class="grow"><div class="nm"><span class="t">'+esc(pkL('أنت','You'))+'</span>'+(mine[t0]?'<i class="dot"></i>':'')+'</div>'+
-     '<div class="small muted num" dir="ltr" style="text-align:start">'+(S.fid?fidFmt(S.fid):'…')+'</div></div><div class="fs"><b class="fl num">'+ic('flame',16)+ms+'</b></div></div>';
+     '<div class="small muted num" dir="ltr" style="text-align:start">'+(S.fid?fidFmt(S.fid):'…')+'</div></div><div class="fs"><b class="fl num">'+flameFx(+ms||0,16)+ms+'</b></div></div>';
   h+=nowBox();
   if(FR.err==='setup')h+='<div class="frmsg">'+esc(pkL('ميزة الأصدقاء غير مفعّلة على السيرفر بعد (تحتاج تشغيل ملف SQL مرة واحدة).','Friends isn’t enabled on the server yet (run the SQL file once).'))+'</div>';
   else if(FR.err==='login')h+='<div class="frmsg">'+esc(pkL('الأصدقاء يحتاج حساب مؤكَّد بالإيميل. سجّل خروج ثم ادخل بحسابك وأدخل رمز التحقق.','Friends needs an email-verified account. Log out, then sign in and enter the verification code.'))+'</div>';
@@ -3151,7 +3187,7 @@ function frInner(){
   h+=L.map(function(x){var nm=frNm(x.f);
     return '<div class="fr"><div class="fav">'+avInner(x.f.photo,nm)+'</div><div class="grow"><div class="nm"><span class="t">'+esc(nm)+'</span>'+(x.on?'<i class="dot" title="'+esc(pkL('درس اليوم','Studied today'))+'"></i>':'')+'</div>'+
      '<div class="small muted num" dir="ltr" style="text-align:start">'+fidFmt(x.f.code)+'</div>'+(nowAct(x.f.now_text,x.f.now_at?Date.parse(x.f.now_at):0)?'<div class="rdn">'+ic('timer',14)+'<span>'+esc(pkL('يقرا: ','Reading: ')+x.f.now_text)+' · '+agoTxt(Date.parse(x.f.now_at))+'</span></div>':'')+'</div>'+
-     '<div class="fs"><b class="fl num" title="'+esc(pkL('ستريكه','Their streak'))+'">'+ic('flame',16)+x.st+'</b><b class="sh2 num" title="'+esc(pkL('ستريككم المشترك','Shared streak'))+'">'+ic('users',16)+x.sh+'</b></div>'+
+     '<div class="fs"><b class="fl num" title="'+esc(pkL('ستريكه','Their streak'))+'">'+flameFx(+x.st||0,16)+x.st+'</b><b class="sh2 num" title="'+esc(pkL('ستريككم المشترك','Shared streak'))+'">'+ic('users',16)+x.sh+'</b></div>'+
      '<button type="button" class="x msgx" data-a="msgopen" data-id="'+esc(x.f.code)+'" aria-label="'+esc(pkL('رسالة','Message'))+'">'+ic('chat',18)+(+x.f.unread>0?'<b class="bd">'+(+x.f.unread>9?'9+':+x.f.unread)+'</b>':'')+'</button>'+
      '<button type="button" class="x" data-a="frrm" data-id="'+esc(x.f.code)+'" aria-label="×">'+ic('trash',18)+'</button></div>'}).join('');
   if(L.length)h+='<div class="lg"><span>'+ic('flame',14)+esc(pkL('ستريك الصديق','Their streak'))+'</span><span>'+ic('users',14)+esc(pkL('ستريككم المشترك (أيام درستوا فيها سوا)','Shared streak (days you both studied)'))+'</span></div>';
@@ -3286,29 +3322,29 @@ function stkLs(k,v){try{if(v===undefined)return localStorage.getItem(KEY+':'+k+'
 function stkFriendsOn(){return stkLs('stkfn')!=='0'}
 function dayNum(k){return Math.round(Date.parse(k+'T00:00:00Z')/864e5)}
 function stkLongest(){
-  var m={};S.logs.forEach(function(l){if(l.min>0)m[l.date]=1});
+  var m={};S.logs.forEach(function(l){if(l.min>0)m[l.date]=1});for(var ad in (S.act||{}))m[ad]=1;
   var d=Object.keys(m).sort().map(dayNum),best=0,run=0,i;
   for(i=0;i<d.length;i++){run=(i&&d[i]-d[i-1]===1)?run+1:1;if(run>best)best=run}
   return best}
 function stkWeek(){var o=[],i,k,dt;
-  for(i=6;i>=0;i--){k=addDays(-i);dt=new Date(k+'T12:00:00');o.push({k:k,on:minsOn(k)>0,td:i===0,n:(S.lang==='ar'?DAYS_AR:DAYS_EN)[dt.getDay()]})}
+  for(i=6;i>=0;i--){k=addDays(-i);dt=new Date(k+'T12:00:00');o.push({k:k,on:actOn(k),td:i===0,n:(S.lang==='ar'?DAYS_AR:DAYS_EN)[dt.getDay()]})}
   return o}
 function stkWeekMin(){var n=0;stkWeek().forEach(function(d){n+=minsOn(d.k)});return n}
 var STK_MS=[3,7,14,30,60,100];
 function stkDoneMsg(name){
-  var n=minsOn(today())>0?streak():0;
+  var n=actOn(today())?streak():0;
   return (name?pkL('خلص وقت '+name+' 🎉','Time is up for '+name+' 🎉'):t('focusDone'))+(n?' · 🔥 '+n:'')}
 function stkSheet(){
-  var n=streak(),done=minsOn(today())>0,best=Math.max(stkLongest(),n),wk=stkWeek(),h='';
+  var n=streak(),done=actOn(today()),best=Math.max(stkLongest(),n),wk=stkWeek(),h='';
   var nx=null;STK_MS.forEach(function(m){if(!nx&&n<m)nx=m});
-  h+='<div class="stkbox"><div class="stkh"><div class="stkc" id="stkc"></div>'+ic('flame',92).replace('class="ic"','class="ic stkf"')+'<div class="stkn num">'+n+'</div><div class="stkl">'+esc(t('streak'))+'</div></div>';
+  h+='<div class="stkbox"><div class="stkh"><div class="stkc" id="stkc"></div>'+'<span class="stkf2">'+flameFx(n,96)+'</span>'+'<div class="stkn num">'+n+'</div><div class="stkl">'+esc(t('streak'))+'</div><div class="stkst2">'+esc(fxName(n))+(n<20?' · '+esc(pkL('المرحلة التالية بعد '+(4-n%4)+' '+daysW(4-n%4),'next stage in '+(4-n%4)+' '+daysW(4-n%4))):'')+'</div></div>';
   h+='<h2 style="text-align:center;margin:0;font-size:calc(17px*var(--fs,1))">'+esc(pkL('ستريكك','Your streak'))+'</h2>';
   h+='<div class="stkw">'+wk.map(function(d){return '<div class="stkd'+(d.on?' on':'')+(d.td?' td':'')+'"><i>'+(d.on?ic('check',16):'')+'</i>'+esc(d.n)+'</div>'}).join('')+'</div>';
   if(!done){
     var now=new Date(),left=Math.max(0,Math.round((new Date(now.getFullYear(),now.getMonth(),now.getDate()+1)-now)/60000)),hh=Math.floor(left/60),mm=left%60;
-    h+='<div class="stkwarn">'+esc(n>0?pkL('ستريكك بيضيع بعد '+hh+' س و'+mm+' د. جلسة 10 دقائق تكفي 🔥','Your streak ends in '+hh+' h '+mm+' m. A 10-minute session is enough 🔥'):pkL('ابدأ جلسة اليوم وشغّل أول يوم بستريكك 🔥','Start a session today to light your first day 🔥'))+'</div>'+
+    h+='<div class="stkwarn">'+esc(n>0?pkL('ستريكك بيضيع بعد '+hh+' س و'+mm+' د. أنجز مهمة أو جلسة قصيرة وتكفي 🔥','Your streak ends in '+hh+' h '+mm+' m. Finish a task or a short session and it is enough 🔥'):pkL('ابدأ جلسة اليوم وشغّل أول يوم بستريكك 🔥','Start a session today to light your first day 🔥'))+'</div>'+
        '<button class="btn" type="button" data-a="stkgo">'+esc(pkL('ابدأ جلسة تركيز','Start a focus session'))+'</button>'}
-  else h+='<div class="stkwarn ok">'+esc(pkL('درست اليوم، ستريكك محفوظ ✓','You studied today, your streak is safe ✓'))+'</div>';
+  else h+='<div class="stkwarn ok">'+esc(pkL('أنجزت اليوم، ستريكك محفوظ ✓','You achieved something today, your streak is safe ✓'))+'</div>';
   h+='<div class="stkst"><div><b class="num">'+best+'</b><span>'+esc(t('mStreak'))+'</span></div><div><b class="num">'+esc(fmtH(stkWeekMin()/60))+'</b><span>'+esc(t('thisWeek'))+'</span></div></div>';
   h+='<div class="stkms">'+STK_MS.map(function(m){return '<span class="'+(best>=m?'on':'')+'">'+(best>=m?'🏅 ':'')+m+'</span>'}).join('')+'</div>';
   if(nx)h+='<div class="small muted" style="text-align:center">'+esc(pkL('باقي '+(nx-n)+' '+daysW(nx-n)+' لإنجاز '+nx,(nx-n)+' '+daysW(nx-n)+' to reach '+nx))+'</div>';
