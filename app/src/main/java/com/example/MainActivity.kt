@@ -196,41 +196,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // [added] If the WebView renderer process dies (low memory / crash) the app used to
-                // close with no explanation. Now the activity is rebuilt and the page reloads.
-                // Local data (localStorage) is kept.
-                @android.annotation.TargetApi(Build.VERSION_CODES.O)
-                override fun onRenderProcessGone(
-                    view: WebView,
-                    detail: android.webkit.RenderProcessGoneDetail
-                ): Boolean {
-                    this@MainActivity.runOnUiThread {
-                        try {
-                            (view.parent as? ViewGroup)?.removeView(view)
-                            this@MainActivity.recreate()
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    }
-                    return true
-                }
-
-                // [added] Tell the user if the main page itself failed to load.
-                override fun onReceivedError(
-                    view: WebView,
-                    request: WebResourceRequest,
-                    error: android.webkit.WebResourceError
-                ) {
-                    super.onReceivedError(view, request, error)
-                    if (request.isForMainFrame) {
-                        Toast.makeText(
-                            this@MainActivity,
-                            "تعذّر تحميل الصفحة، أعد فتح التطبيق",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
-
                 override fun onPageFinished(view: WebView, url: String) {
                     super.onPageFinished(view, url)
                     // Hook bridge for printing, vibration, notifications, and file downloads

@@ -3,13 +3,3 @@ keystore.properties
 *.jks
 *.keystore
 !debug.keystore
-
-# [added] secrets and build junk that should never be uploaded
-.env
-.env.*
-!.env.example
-local.properties
-.gradle/
-build/
-.idea/
-*.iml
