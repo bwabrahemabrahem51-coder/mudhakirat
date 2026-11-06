@@ -6,6 +6,7 @@
 // يحتاج Webhook (Insert) على جدولين، بنفس الـ URL ونفس هيدر x-webhook-secret:
 //   1) fr_messages  → إشعار رسالة جديدة
 //   2) fr_requests  → إشعار طلب صداقة جديد
+//   3) fr_notifs    → إشعار إضافتك لكروب / تحدٍّ جديد / قبول تحدّيك
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const sa = JSON.parse(Deno.env.get("FCM_SERVICE_ACCOUNT") ?? "{}");
@@ -60,7 +61,8 @@ Deno.serve(async (req) => {
   const rec = (await req.json())?.record;
   if (!rec?.to_uid || !rec?.from_uid) return new Response("ignored");
   // سجل fr_requests عنده status ومافي body؛ سجل fr_messages العكس
-  const isReq = rec.status !== undefined && rec.body === undefined;
+  const isNotif = rec.topic !== undefined;   // جدول fr_notifs
+  const isReq = !isNotif && rec.status !== undefined && rec.body === undefined;
   if (isReq && rec.status !== "pending") return new Response("ignored");
 
   const { data: from } = await db.from("fr_profiles").select("name").eq("uid", rec.from_uid).maybeSingle();
@@ -68,7 +70,11 @@ Deno.serve(async (req) => {
   if (!rows?.length) return new Response("no tokens");
 
   const name = from?.name || "صديق";
-  const body = isReq
+  const body = isNotif
+    ? rec.topic === "group" ? `${name} أضافك لكروب «${String(rec.body ?? "").slice(0, 40)}» 👥`
+      : rec.topic === "challenge" ? `${name} يتحداك ⚔️ لمدة ${String(rec.body ?? "7")} أيام`
+      : `${name} قبل تحديك 💪 ابدأ المذاكرة!`
+    : isReq
     ? `${name} أرسل لك طلب صداقة 👋`
     : rec.kind === "cheer" ? `${name} شجّعك 💪` : `${name}: ${String(rec.body).slice(0, 100)}`;
   const at = await accessToken();
@@ -80,7 +86,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         message: {
           token,
-          data: { title: "مذاكرتي", body, tag: `${isReq ? "rq" : "msg"}-${rec.from_uid}` },
+          data: { title: "مذاكرتي", body, tag: `${isNotif ? "nt-" + rec.topic : isReq ? "rq" : "msg"}-${rec.from_uid}` },
           android: { priority: "HIGH" },
         },
       }),

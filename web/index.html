@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob:; connect-src 'self' https://gojcpksvjhhulvmyzaxf.supabase.co; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+
 <meta name="theme-color" content="#F1F3F9">
 <script>try{var _fi=parseInt(localStorage.getItem('mudhakirati-fs'),10),_fl=[.8,.9,1,1.12,1.25];document.documentElement.style.setProperty('--fs',_fl[_fi>=0&&_fi<5?_fi:2])}catch(e){}</script>
 <script>
@@ -943,6 +945,25 @@ html.sa #splash{display:flex}
 .fr .fs b.fl{color:var(--hot)}
 .fr .fs b.sh2{color:var(--accent-text)}
 .fr.me{border-top:0;padding-top:2px}
+.fr .rk{width:28px;flex:none;text-align:center;font-weight:800;color:var(--muted)}
+.fr.mine{background:var(--soft);border-radius:14px;padding-inline:10px}
+.bjoin{display:flex;flex-direction:column;gap:10px;padding:12px;margin-top:10px;border:1px solid var(--line);border-radius:14px;font-size:calc(13.5px*var(--fs,1));line-height:1.6}
+.fr .x.rp,.chm .x.rp{font-size:15px;opacity:.55}
+.rdot{width:12px;height:12px;border-radius:50%;flex:none;background:var(--line)}
+.rdot.g{background:#22c55e;animation:rdg 1.8s ease-out infinite}
+.rdot.r{background:#ef4444;animation:rdr 1.2s ease-in-out infinite}
+@keyframes rdg{0%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}70%,100%{box-shadow:0 0 0 9px rgba(34,197,94,0)}}
+@keyframes rdr{0%,100%{opacity:1}50%{opacity:.12}}
+@media (prefers-reduced-motion:reduce){.rdot.g,.rdot.r{animation:none!important}}
+.rtx{color:#ef4444;font-weight:700}
+.subtabs{display:flex;gap:8px;justify-content:center;margin-top:12px}
+.rmb{width:100%;background:none;border:0;border-top:1px solid var(--line);color:inherit;font:inherit;text-align:start;cursor:pointer}
+.chm .mnm{display:block;font-size:12px;opacity:.7;margin-bottom:2px}
+.rpt{padding:10px 12px;margin-top:8px;border:1px solid var(--line);border-radius:14px}
+.chr .rqb{display:flex;gap:6px;flex:none}
+.nowin{height:46px;border-radius:99px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);padding-inline:16px;font:inherit}
+.fr .fs b.pts{color:var(--accent-text);font-size:calc(16px*var(--fs,1))}
+.mnav button:disabled{opacity:.35}
 .fav{overflow:hidden}
 .fav img{width:100%;height:100%;object-fit:cover;display:block}
 .rqh{display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:800;color:var(--accent-text)}
@@ -1930,6 +1951,7 @@ function tick(){
     if(TM.mode==='focus')S.logs.push({id:uid(),subj:TM.subj,min:S.settings.focus,date:today()});
     try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}
     notify(t('app'),TM.mode==='focus'?stkDoneMsg((subj(TM.subj)||{}).name):t('brkDone'),'session-end');
+    rmDone();
     setMode(TM.mode==='focus'?'break':'focus');render();return}
   /* the clock text only changes once a second: repaint only when something visible changed (was every 250ms) */
   var tk=TM.left+'|'+S.view+'|'+TM.running+'|'+TM.mode+'|'+TM.total;
@@ -1938,7 +1960,7 @@ function tick(){
 function timerToggle(){
   if(TM.running){var ms=Math.max(0,TM.endAt-Date.now());TM.leftMs=ms;TM.left=Math.ceil(ms/1000);TM.running=false}
   else{TM.endAt=Date.now()+(TM.leftMs!=null?TM.leftMs:TM.left*1000);TM.leftMs=null;TM.running=true}
-  swTimer();stkTimerHook()}
+  swTimer();stkTimerHook();rmTimerHook()}
 setInterval(tick,250);
 /* background tabs throttle or freeze timers: re-sync from Date.now() the moment the page is visible again */
 function syncTimer(){if(!document.hidden)tick()}
@@ -2226,7 +2248,7 @@ function logout(){
   try{if(navigator.serviceWorker&&navigator.serviceWorker.ready)navigator.serviceWorker.ready.then(function(r){if(r.periodicSync)r.periodicSync.unregister('daily-reminder').catch(function(){})}).catch(function(){})}catch(e){}
   try{var FB=window.AndroidBridge;if(FB&&FB.getFcmToken){var ft=FB.getFcmToken();if(ft)frRpc('delete_fcm',{p_token:ft}).catch(function(){})}localStorage.removeItem('mz-fcm')}catch(e){}
   flushSave();if(SB){clearTimeout(SB.t);sbPush()}USER='';clearSession();if(SB){SB.tok='';try{localStorage.removeItem('mudhakirati-sb')}catch(e){}}
-  TM.running=false;TM.endAt=0;TM.leftMs=null;AU.mode='login';AU.err='';FR.rq=null;FR.rqSeen=null;FR.rqSig='';
+  TM.running=false;TM.endAt=0;TM.leftMs=null;AU.mode='login';AU.err='';FR.rq=null;FR.rqSeen=null;FR.rqSig='';GP.list=null;GP.chl=null;GP.gid=0;GP.rid=0;GP.g=null;GP.rm=null;GP.gm=null;GP.first=0;GP.sig='';RM.rid=0;RM.manual=0;rmSave();
   var lang=S.lang;S=seed();S.lang=lang;showAuth()}
 document.addEventListener('click',function(e){
   var el=e.target.closest('[data-au]');if(!el)return;var a=el.getAttribute('data-au');
@@ -3043,7 +3065,7 @@ function playIntro(quick){
   setTimeout(function(){el.classList.add('off');setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el)},700)},quick?1100:3200)}
 /* ======================= مساحتي =======================
    1) الجدول الأسبوعي  2) الستريك مع الأصدقاء (Supabase)  3) بطاقات الملاحظات المهمة */
-var FR={nk:'lesson',nd:30,nsel:'',now:'',list:null,err:'',busy:false,sig:'',add:'',msg:'',ok:false,t:0,rq:null,rqSeen:null,rqSig:'',pno:0};
+var FR={nk:'lesson',nd:30,nsel:'',now:'',list:null,err:'',busy:false,sig:'',add:'',msg:'',ok:false,t:0,rq:null,rqSeen:null,rqSig:'',pno:0,bw:0,board:null,bsetup:false};
 var DAYS_AR=['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'],DAYS_EN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 var DAYS_AR_L=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],DAYS_EN_L=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 function fidFmt(c){return c?c.slice(0,4)+'-'+c.slice(4):''}
@@ -3057,11 +3079,15 @@ function subjColor(name){
   return '';}
 
 /* ---------- view ---------- */
+function schedHub(){
+  var ns=UI.schSub==='notes';
+  return (ns?notesCard():schedCard())+'<div class="subtabs rise" style="--d:'+(D++)+'"><button type="button" class="chip" data-a="schsub" data-id="sched" aria-pressed="'+!ns+'">'+ic('week',16)+esc(pkL('الجدول','Schedule'))+'</button><button type="button" class="chip" data-a="schsub" data-id="notes" aria-pressed="'+ns+'">'+ic('note',16)+esc(pkL('الملاحظات','Notes'))+'</button></div>'}
+function rkCard(){return '<section class="card rise" id="rkBox" style="--d:'+(D++)+'">'+frBoard()+'</section>'}
 function vHub(){
-  var T=['sched','fr','notes'],i=T.indexOf(UI.hubTab);if(i<0){i=0;UI.hubTab='sched'}
-  var L=[pkL('الجدول','Schedule'),pkL('الأصدقاء','Friends'),pkL('الملاحظات','Notes')];
-  return '<div class="seg rise" id="segH" style="--n:3;--i:'+i+';--d:'+(D++)+'"><i class="th"></i>'+T.map(function(k,j){return '<button type="button" data-a="hubtab" data-id="'+k+'" aria-pressed="'+(j===i)+'">'+L[j]+'</button>'}).join('')+'</div>'+[schedCard,frCard,notesCard][i]()}
-function hubOpened(){if(!FR.t||Date.now()-FR.t>20000){FR.t=Date.now();frLoad()}}
+  var T=['sched','fr','ch','rk'],i=T.indexOf(UI.hubTab);if(i<0){i=0;UI.hubTab='sched'}
+  var L=[pkL('الجدول','Schedule'),pkL('الأصدقاء','Friends'),pkL('التحديات','Challenges'),pkL('التصنيف','Ranking')];
+  return '<div class="seg rise" id="segH" style="--n:4;--i:'+i+';--d:'+(D++)+'"><i class="th"></i>'+T.map(function(k,j){return '<button type="button" data-a="hubtab" data-id="'+k+'" aria-pressed="'+(j===i)+'">'+L[j]+'</button>'}).join('')+'</div>'+[schedHub,frCard,gpCard,rkCard][i]()}
+function hubOpened(){if(UI.hubTab==='ch'&&GP.list===null&&!GP.first){GP.first=1;setTimeout(gpOpen,0)}if(!FR.t||Date.now()-FR.t>20000){FR.t=Date.now();frLoad()}}
 
 /* ---------- 1) weekly schedule ---------- */
 var SCH_ORDER=[6,0,1,2,3,4,5];   /* Sat Sun Mon Tue Wed Thu Fri */
@@ -3099,18 +3125,25 @@ function andNewDay(){try{var B=window.AndroidBridge;if(B&&B.scheduleNewDay)B.sch
 setTimeout(andNewDay,2500);
 setTimeout(fcmSync,3000);setInterval(fcmSync,20000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)fcmSync()});
+/* ---- weekly points: 1 point per study minute + 10 bonus for every day with an achievement ---- */
+function ptsOn(d){var v=minsOn(d)+(actOn(d)?10:0);return Math.min(1450,v)}
+function myPts(){var m={},i,d,v;for(i=0;i<8;i++){d=addDays(-i);v=ptsOn(d);if(v>0)m[d]=v}return m}
+function frWk(off){var st=wkStart(off),en=new Date(st);en.setDate(st.getDate()+6);return {a:dk(st),b:dk(en),days:7}}
+function frBoardLoad(){var w=frWk(FR.bw||0);
+  return frRpc('get_global_board',{p_from:w.a,p_to:w.b}).then(function(r){FR.board=(r&&Array.isArray(r.top))?r:null;FR.bsetup=false},function(e){FR.board=null;if(frIsMissing(e))FR.bsetup=true})}
 function frSync(force){
   if(!sbOn()||!USER)return Promise.resolve();
-  var d=myDays(),nm=profName(),sig=nm+'|'+d.join(',');
+  var d=myDays(),nm=profName(),pt=myPts(),sig=nm+'|'+d.join(',')+'|'+JSON.stringify(pt);
   if(!force&&sig===FR.sig&&S.fid)return Promise.resolve();
   return frRpc('sync_profile',{p_name:nm,p_days:d}).then(function(c){
     FR.sig=sig;if(FR.err==='setup')FR.err='';
     if(typeof c==='string'&&/^[A-Z0-9]{8}$/.test(c)&&S.fid!==c){S.fid=c;save()}
-  },function(e){frErr(e);throw e}).then(function(){frPhoto()})}
+  },function(e){frErr(e);throw e}).then(function(){frPhoto()})
+   .then(function(){return frRpc('sync_points',{p_pts:pt}).then(function(){FR.bsetup=false},function(e){if(frIsMissing(e))FR.bsetup=true})})}
 function frLoad(){
   if(!sbOn()||!USER)return;
   FR.busy=true;paintFr();
-  frSync(true).then(function(){return frRpc('get_friends',{})}).then(function(r){FR.list=Array.isArray(r)?r:[];FR.err=''}).then(frReqLoad)
+  frSync(true).then(function(){return frRpc('get_friends',{})}).then(function(r){FR.list=Array.isArray(r)?r:[];FR.err=''}).then(frReqLoad).then(frBoardLoad)
    .catch(function(e){if(!FR.err)frErr(e)}).then(function(){FR.busy=false;paintFr();var e=document.getElementById('fidVal');if(e&&S.fid)e.textContent=fidFmt(S.fid)})}
 /* ---- friend requests: profile photo thumbnail, load, alerts, cards ---- */
 /* ---- friend display names: local nickname > his own profile name > ID (the e-mail is never shown) ---- */
@@ -3165,35 +3198,44 @@ function agoTxt(at){var m=Math.max(0,Math.round((Date.now()-at)/60000));
   if(m<1)return pkL('الآن','now');if(m<60)return pkL('قبل '+m+' د',m+' min ago');var h=Math.floor(m/60);return pkL('قبل '+h+' س',h+' h ago')}
 function durLbl(m){return m===60?pkL('ساعة','1 h'):m===90?pkL('ساعة ونص','1.5 h'):m===120?pkL('ساعتين','2 h'):m+' '+pkL('د','min')}
 function nowKinds(){return [['lesson',pkL('درس','Lesson')],['hw',pkL('واجب','Homework')],['book',pkL('كتاب','Book')],['custom',pkL('مخصص','Custom')]]}
-function nowTiles(){
-  var k=FR.nk||'lesson',o=[],seen={};
+function nowTiles(k0){
+  var k=k0||FR.nk||'lesson',o=[],seen={};
   function add(n,c,i){if(n&&!seen[n]){seen[n]=1;o.push({n:n,c:c,i:i})}}
   if(k==='hw'){
     S.reviews.forEach(function(r){var d=false;try{d=rvInfo(r).done}catch(e){}if(r.kind==='hw'&&!d)add(r.name,r.color,'tasks')});
     S.lists.forEach(function(l){if(l.kind==='hw'&&!l.done)add(l.name,COLORS[4],'tasks')})}
   if(k!=='custom')S.subjects.forEach(function(x){add(x.name,x.color,subjIcon(x.name))});
   return o}
-function nowBox(){
-  var h='';
-  if(nowAct(S.nowT,S.nowAt)){
-    var d=nowDur(S.nowT),left=d?Math.ceil((S.nowAt+d*60000-Date.now())/60000):0;
-    return '<div class="nowc"><div style="min-width:0"><div class="small muted">'+esc(pkL('تقرا الآن (يشوفها أصدقاؤك)','Studying now (your friends see it)'))+(d?' · '+esc(left>0?pkL('باقي '+left+' د','~'+left+' min left'):pkL('انتهى الوقت المتوقع','Expected time is up')):'')+'</div><b>'+esc(S.nowT)+'</b></div><button type="button" class="chip" data-a="nowend">'+esc(pkL('خلصت','Done'))+'</button></div>'}
-  var k=FR.nk||'lesson',T=nowTiles();
-  h+='<form id="fNow" class="nowf"><div class="small muted">'+esc(pkL('شنو راح تسوي؟','What will you do?'))+'</div><div class="kchips">'+
-    nowKinds().map(function(x){return '<button type="button" class="chip" data-a="nkind" data-id="'+x[0]+'" aria-pressed="'+(k===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>';
-  if(k==='custom')h+='<input id="nowIn" class="nowin" maxlength="36" value="'+esc(FR.now||'')+'" placeholder="'+esc(pkL('اكتب اسم الشي اللي تدرسه','Type what you are studying'))+'" autocomplete="off" style="height:46px;border-radius:99px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);padding-inline:16px;font:inherit">';
-  else if(T.length)h+='<div class="ptiles">'+T.map(function(x,n){return '<button type="button" class="pt" style="--c:'+x.c+'" data-a="ntile" data-id="'+n+'" aria-pressed="'+(FR.nsel===x.n)+'">'+ic(x.i,22)+'<span>'+esc(x.n)+'</span></button>'}).join('')+'</div>';
-  else h+='<div class="muted small">'+esc(pkL('ما عندك مواد. أضف مواد من تبويب «المواد» أو اختر «مخصص».','No subjects yet. Add some in “Subjects” or pick “Custom”.'))+'</div>';
-  h+='<div class="small muted">'+esc(pkL('كم تتوقع تخلص؟','How long do you expect it to take?'))+'</div><div class="kchips">'+
-    [15,30,45,60,90,120].map(function(m){return '<button type="button" class="chip" data-a="ndur" data-id="'+m+'" aria-pressed="'+((FR.nd||30)===m)+'">'+durLbl(m)+'</button>'}).join('')+'</div>'+
-    '<button class="btn" type="submit">'+esc(pkL('ابدأ','Start'))+'</button></form>';
+/* ---- public weekly leaderboard: opt-in, shows only name + photo + points (never the ID) ---- */
+function brRow(r,B){
+  var nm=r.name||pkL('طالب','Student'),med=['🥇','🥈','🥉'],top=r.rank<=3;
+  return '<div class="fr'+(r.me?' mine':'')+'"><b class="rk num">'+(top?med[r.rank-1]:r.rank)+'</b><div class="fav">'+avInner(r.photo,nm)+'</div>'+
+    '<div class="grow"><div class="nm"><span class="t">'+esc(r.me?(r.name?r.name+' · ':'')+pkL('أنت','You'):nm)+'</span></div></div><div class="fs"><b class="pts num">'+r.pts+'</b></div>'+
+    (!r.me&&r.ref?'<button type="button" class="x rp" data-a="bdrep" data-id="'+esc(r.ref)+'" aria-label="'+esc(pkL('إبلاغ','Report'))+'">🚩</button>':'')+'</div>'}
+function frBoard(){
+  var off=FR.bw||0,w=frWk(off),ar=S.lang==='ar',h='',B=FR.board;
+  h+='<div class="sh" style="margin-top:18px"><h2 class="hubh">'+ic('progress',20)+pkL('ترتيب الأسبوع','Weekly ranking')+'</h2></div>';
+  if(FR.bsetup)return h+'<div class="frmsg">'+esc(pkL('الترتيب الأسبوعي غير مفعّل على السيرفر بعد (شغّل ملف weekly-board-setup.sql مرة واحدة).','Weekly ranking isn’t enabled on the server yet (run weekly-board-setup.sql once).'))+'</div>';
+  h+='<div class="mnav"><button type="button" data-a="bwmove" data-id="-1"'+(off<=-4?' disabled':'')+' aria-label="'+esc(pkL('الأسبوع السابق','Previous week'))+'">'+ic(ar?'chevR':'chevL',18)+'</button>'+
+     '<h2 class="num">'+esc(off===0?pkL('هذا الأسبوع','This week'):fmtDate(w.a)+' – '+fmtDate(w.b))+'</h2>'+
+     '<button type="button" data-a="bwmove" data-id="1"'+(off>=0?' disabled':'')+' aria-label="'+esc(pkL('الأسبوع التالي','Next week'))+'">'+ic(ar?'chevL':'chevR',18)+'</button></div>';
+  if(!B)return h+'<div class="muted small">'+esc(FR.busy?pkL('جارٍ التحميل…','Loading…'):pkL('تعذّر تحميل الترتيب. اضغط تحديث.','Could not load the ranking. Tap Refresh.'))+'</div>';
+  if(!B.on)h+='<div class="bjoin"><div>'+esc(pkL('الترتيب مفتوح لكل مستخدمي التطبيق. إذا انضممت يظهر اسمك وصورتك ونقاطك فقط، وما يظهر الـID أبداً. تكدر تنسحب بأي وقت.','The ranking is open to all app users. If you join, only your name, photo and points are shown, never your ID. You can leave any time.'))+'</div>'+
+    '<button type="button" class="btn" data-a="bdon"'+(FR.busy?' disabled':'')+'>'+esc(pkL('انضم للترتيب','Join the ranking'))+'</button></div>';
+  var T=B.top||[];
+  if(!T.length)h+='<div class="muted small" style="padding-block:8px">'+esc(pkL('ما أحد بالترتيب هذا الأسبوع بعد. كن أول واحد 💪','Nobody is ranked this week yet. Be the first 💪'))+'</div>';
+  h+=T.map(function(r){return brRow(r,B)}).join('');
+  if(B.me&&!T.some(function(r){return r.me}))h+='<div class="muted small" style="text-align:center">…</div>'+brRow({rank:B.me.rank,pts:B.me.pts,me:true,name:profName(),photo:(S.profile&&S.profile.photo)||''},B);
+  else if(B.on&&!B.me)h+='<div class="muted small" style="padding-top:8px">'+esc(pkL('انضممت ✓ ابدأ مذاكرة حتى تظهر بالترتيب.','You joined ✓ study a little to appear in the ranking.'))+'</div>';
+  if(+B.total>0)h+='<div class="muted small num" style="padding-top:6px">'+esc(pkL('عدد المشاركين: ','Participants: ')+B.total)+'</div>';
+  h+='<div class="lg" style="padding-top:8px"><span>'+esc(pkL('نقطة لكل دقيقة مذاكرة + 10 مكافأة لكل يوم أنجزت فيه. يبدأ الأسبوع '+(ar?'السبت':'الاثنين')+'. 🚩 للإبلاغ عن اسم أو صورة غير لائقة.','1 point per study minute + 10 bonus for each day you achieve something. The week starts '+(ar?'Saturday':'Monday')+'. 🚩 reports an inappropriate name or photo.'))+'</span></div>';
+  if(B.on)h+='<button type="button" class="chip" data-a="bdoff"'+(FR.busy?' disabled':'')+'>'+esc(pkL('إخفاء نفسي من الترتيب','Hide me from the ranking'))+'</button>';
   return h}
 function frInner(){
   var me=myDays(),mine=setOf(me),ms=runLen(function(d){return mine[d]}),h='',t0=today();
   h+='<div class="sh"><h2 class="hubh">'+ic('users',20)+pkL('الستريك مع الأصدقاء','Friends streak')+'</h2><button type="button" class="chip" data-a="frref"'+(FR.busy?' disabled':'')+'>'+(FR.busy?pkL('جارٍ التحديث…','Updating…'):pkL('تحديث','Refresh'))+'</button></div>';
   h+='<div class="fr me"><div class="fav">'+esc((profName()||String(USER||'?')).trim().charAt(0).toUpperCase())+'</div><div class="grow"><div class="nm"><span class="t">'+esc(pkL('أنت','You'))+'</span>'+(mine[t0]?'<i class="dot"></i>':'')+'</div>'+
      '<div class="small muted num" dir="ltr" style="text-align:start">'+(S.fid?fidFmt(S.fid):'…')+'</div></div><div class="fs"><b class="fl num">'+flameFx(+ms||0,16)+ms+'</b></div></div>';
-  h+=nowBox();
   if(FR.err==='setup')h+='<div class="frmsg">'+esc(pkL('ميزة الأصدقاء غير مفعّلة على السيرفر بعد (تحتاج تشغيل ملف SQL مرة واحدة).','Friends isn’t enabled on the server yet (run the SQL file once).'))+'</div>';
   else if(FR.err==='login')h+='<div class="frmsg">'+esc(pkL('الأصدقاء يحتاج حساب مؤكَّد بالإيميل. سجّل خروج ثم ادخل بحسابك وأدخل رمز التحقق.','Friends needs an email-verified account. Log out, then sign in and enter the verification code.'))+'</div>';
   else if(FR.err==='net')h+='<div class="frmsg">'+esc(pkL('تعذّر الاتصال، تأكد من الإنترنت وحاول مرة ثانية.','Could not connect, check your internet and retry.'))+'</div>';
@@ -3213,7 +3255,314 @@ function frInner(){
   if(L.length)h+='<div class="lg"><span>'+ic('flame',14)+esc(pkL('ستريك الصديق','Their streak'))+'</span><span>'+ic('users',14)+esc(pkL('ستريككم المشترك (أيام درستوا فيها سوا)','Shared streak (days you both studied)'))+'</span></div>';
   return h}
 function frCard(){return '<section class="card rise" id="frBox" style="--d:'+(D++)+'">'+frInner()+'</section>'}
-function paintFr(){var e=document.getElementById('frBox');if(!e)return;var f=document.activeElement,keep=f&&f.id==='frIn';e.innerHTML=frInner();if(keep){var n=document.getElementById('frIn');if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length)}catch(x){}}}}
+function paintFr(){var rk=document.getElementById('rkBox');if(rk)rk.innerHTML=frBoard();var e=document.getElementById('frBox');if(!e)return;var f=document.activeElement,keep=f&&f.id==='frIn';e.innerHTML=frInner();if(keep){var n=document.getElementById('frIn');if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length)}catch(x){}}}}
+
+/* ================= التحديات: كروبات + رومات + تحدي الأصدقاء ================= */
+var GP={first:0,mleft:30,bw:0,gb:null,ren:false,list:null,chl:null,gid:0,g:null,rid:0,rm:null,gm:null,mt:'',nm:'',jc:'',rn:'',rk:'public',busy:false,msg:'',ok:false,setup:false,sig:'',
+  nk:'lesson',ns:'',nc:'',nd:30,cnew:false,cf:'',cd:7,addf:false,repo:false,reps:null,inv:false,newg:false,joing:false,newr:false};
+var RM={rid:0,gid:0,manual:0};
+try{var _rmv=JSON.parse(localStorage.getItem('mz-room')||'null');if(_rmv&&_rmv.rid){RM.rid=+_rmv.rid;RM.gid=+_rmv.gid}}catch(e){}
+function rmSave(){try{localStorage.setItem('mz-room',JSON.stringify(RM.rid?{rid:RM.rid,gid:RM.gid}:null))}catch(e){}}
+function gpRpc(fn,b){return frRpc(fn,b||{})}
+function gpSet(m,ok){GP.msg=m||'';GP.ok=!!ok}
+function gpMsg(e){
+  var m=String(e&&(e.message||e.msg)||''),T=[
+    ['bad_code',pkL('الكود غير صحيح أو مقفول','Wrong or locked code')],
+    ['rate_limited',pkL('محاولات كثيرة، انتظر شوية','Too many tries, wait a bit')],
+    ['group_full',pkL('الكروب ممتلئ (30 عضو)','The group is full (30 members)')],
+    ['too_many_groups',pkL('وصلت الحد الأقصى: 3 كروبات تنشئها','Limit reached: you can create 3 groups')],
+    ['too_many_memberships',pkL('وصلت الحد الأقصى: 10 كروبات','Limit reached: 10 groups')],
+    ['bad_name',pkL('اكتب اسم من حرفين على الأقل','Name needs at least 2 characters')],
+    ['not_friend',pkL('لازم يكون صديقك','They must be your friend')],
+    ['too_many_rooms',pkL('وصلت الحد الأقصى للرومات','Room limit reached')],
+    ['quota_exceeded',pkL('خلصت رسائلك لليوم (30 رسالة)','You used all 30 messages today')],
+    ['private_room',pkL('هذا الروم خاص','This room is private')],
+    ['no_profile',pkL('افتح تبويب الأصدقاء مرة وحدة حتى يتفعّل حسابك','Open the Friends tab once to activate your profile')],
+    ['too_many',pkL('عندك تحديات كثيرة','You have too many challenges')],
+    ['not_admin',pkL('هذا الإجراء للأدمن فقط','Admins only')],
+    ['already',pkL('موجود من قبل','Already exists')]];
+  if(e&&e.offline)return pkL('سجّل دخولك أولاً من الإعدادات','Sign in first from Settings');
+  for(var i=0;i<T.length;i++)if(m.indexOf(T[i][0])>=0)return T[i][1];
+  if(frIsMissing(e)){GP.setup=true;return ''}
+  return pkL('صار خطأ، حاول مرة ثانية','Something went wrong, try again')}
+function gpGone(e){return /gone|not_member|private_room/.test(String(e&&(e.message||e.msg)||''))}
+function gpFail(e,silent){
+  if(GP.rid&&gpGone(e)){if(RM.rid===GP.rid){RM.rid=0;rmSave()}GP.rid=0;GP.rm=null;GP.gm=null;GP.sig='';gpSet(pkL('الروم انتهى أو ما عاد متاح','The room has ended'));paintGp();return}
+  if(GP.gid&&/not_member/.test(String(e&&(e.message||e.msg)||''))){GP.gid=0;GP.g=null;GP.gm=null;GP.gb=null;GP.sig='';gpSet(pkL('ما عدت بالكروب','You are no longer in this group'));paintGp();return}
+  if(silent)return;
+  gpSet(gpMsg(e));paintGp()}
+
+/* one pull for whatever screen is open; repaints only when something changed */
+function gpPull(silent){
+  if(!sbOn()||!USER)return Promise.resolve();
+  var ps=[],snap={};
+  if(GP.rid){
+    ps.push(gpRpc('get_room',{p_room:GP.rid}).then(function(r){snap.rm=r}));
+    ps.push(gpRpc('get_gmsgs',{p_group:GP.gid,p_room:GP.rid,p_after:0}).then(function(r){snap.gm=r}));
+    if(GP.repo)ps.push(gpRpc('get_group_reports',{p_group:GP.gid}).then(function(r){snap.reps=r}))}
+  else if(GP.gid){
+    ps.push(gpRpc('get_group',{p_group:GP.gid}).then(function(r){snap.g=r}));
+    var wk=frWk(GP.bw||0);ps.push(gpRpc('get_group_board',{p_group:GP.gid,p_from:wk.a,p_to:wk.b}).then(function(r){snap.gb=r}));
+    ps.push(gpRpc('get_gmsgs',{p_group:GP.gid,p_room:null,p_after:0}).then(function(r){snap.gm=r}));
+    if(GP.repo)ps.push(gpRpc('get_group_reports',{p_group:GP.gid}).then(function(r){snap.reps=r}))}
+  else{
+    ps.push(gpRpc('get_my_groups').then(function(r){snap.list=r}));
+    ps.push(gpRpc('get_challenges').then(function(r){snap.chl=r}))}
+  return Promise.all(ps).then(function(){
+    var sig=JSON.stringify(snap),ch=sig!==GP.sig;GP.sig=sig;GP.setup=false;
+    if(snap.rm)GP.rm=snap.rm;if(snap.g)GP.g=snap.g;if(snap.gm){GP.gm=snap.gm;GP.mleft=snap.gm.left}
+    if(snap.list)GP.list=snap.list;if(snap.chl)GP.chl=snap.chl;if(snap.reps)GP.reps=snap.reps;if(snap.gb)GP.gb=snap.gb;
+    if(ch||!silent)paintGp()},function(e){
+    if(frIsMissing(e)){GP.setup=true;GP.list=GP.list||[];paintGp();return}
+    gpFail(e,silent)})}
+function gpOpen(){
+  if(!sbOn()||!USER){paintGp();return}
+  hubOpened();GP.sig='';
+  frSync(false).catch(function(){}).then(function(){return gpPull(false)})}
+/* a user action: run an RPC, then refresh the open screen */
+function gpAct(fn,body,okMsg,then,sync){
+  if(GP.busy)return;GP.busy=true;gpSet('');paintGp();
+  return (sync?frSync(false).catch(function(){}):Promise.resolve()).then(function(){return gpRpc(fn,body)}).then(function(r){
+      if(okMsg)gpSet(okMsg,true);return then?then(r):0},function(e){var m=gpMsg(e);if(m)gpSet(m)})
+    .then(function(){GP.busy=false;GP.sig='';return gpPull(true)}).then(function(){paintGp()})}
+
+function paintGp(){
+  var e=document.getElementById('gpBox');if(!e)return;
+  var f=document.activeElement,fid=f&&f.id&&/^(gmIn|gnIn|gjIn|rnIn|rnowIn)$/.test(f.id)?f.id:'',ss=0,se=0,cl=document.getElementById('gpChat'),
+      atEnd=!cl||cl.scrollHeight-cl.scrollTop-cl.clientHeight<60;
+  if(fid){try{ss=f.selectionStart;se=f.selectionEnd}catch(x){}}
+  e.innerHTML=gpInner();
+  var c2=document.getElementById('gpChat');if(c2&&atEnd)c2.scrollTop=c2.scrollHeight;
+  if(fid){var n=document.getElementById(fid);if(n){n.focus();try{n.setSelectionRange(ss,se)}catch(x){}}}}
+function gpCard(){return '<section class="card rise" id="gpBox" style="--d:'+(D++)+'">'+gpInner()+'</section>'}
+function gpBack(){var ar=S.lang==='ar';return '<button type="button" class="chip" data-a="gpback">'+ic(ar?'chevR':'chevL',16)+esc(pkL('رجوع','Back'))+'</button>'}
+function gpMsgBox(){return GP.msg?'<div class="frmsg'+(GP.ok?' ok':'')+'" role="status">'+esc(GP.msg)+'</div>':''}
+function gpInner(){
+  if(!sbOn()||!USER)return '<div class="sh"><h2 class="hubh">👥 '+esc(pkL('الكروبات والتحديات','Groups & challenges'))+'</h2></div><div class="frmsg">'+esc(pkL('سجّل دخولك من الإعدادات حتى تستخدم الكروبات والتحديات.','Sign in from Settings to use groups and challenges.'))+'</div>';
+  if(GP.setup)return '<div class="sh"><h2 class="hubh">👥 '+esc(pkL('الكروبات والتحديات','Groups & challenges'))+'</h2></div><div class="frmsg">'+esc(pkL('الكروبات غير مفعّلة على السيرفر بعد (شغّل ملف groups-setup.sql مرة واحدة).','Groups aren’t enabled on the server yet (run groups-setup.sql once).'))+'</div>';
+  if(GP.rid)return gpRoomView();
+  if(GP.gid)return gpGroupView();
+  return gpListView()}
+
+/* ---------- list of my groups + friend challenges ---------- */
+function gpListView(){
+  var h='',L=GP.list;
+  h+='<div class="sh"><h2 class="hubh">👥 '+esc(pkL('الكروبات','Groups'))+'</h2><div class="kchips"><button type="button" class="chip" data-a="gpnewg" aria-pressed="'+GP.newg+'">'+ic('plus',16)+esc(pkL('كروب','New'))+'</button><button type="button" class="chip" data-a="gpjoing" aria-pressed="'+GP.joing+'">'+esc(pkL('أدخل كود','Join'))+'</button></div></div>';
+  h+=gpMsgBox();
+  if(GP.newg)h+='<form id="fGrpNew" class="nowf" autocomplete="off"><input id="gnIn" class="nowin" maxlength="40" value="'+esc(GP.nm)+'" placeholder="'+esc(pkL('اسم الكروب (مثلاً: سادس علمي)','Group name'))+'"><button class="btn" type="submit"'+(GP.busy?' disabled':'')+'>'+esc(pkL('إنشاء الكروب','Create group'))+'</button></form>';
+  if(GP.joing)h+='<form id="fGrpJoin" class="nowf" autocomplete="off"><input id="gjIn" class="nowin" dir="ltr" maxlength="12" value="'+esc(GP.jc)+'" placeholder="'+esc(pkL('كود الكروب (8 خانات)','Group code (8 characters)'))+'" autocapitalize="characters"><button class="btn" type="submit"'+(GP.busy?' disabled':'')+'>'+esc(pkL('انضم','Join'))+'</button></form>';
+  if(L===null)h+='<div class="muted small">'+esc(pkL('جارٍ التحميل…','Loading…'))+'</div>';
+  else if(!L.length)h+='<div class="muted small" style="padding-block:6px">'+esc(pkL('ما عندك كروبات. أنشئ كروب وادعُ أصدقاءك، أو ادخل بكود من صديق.','No groups yet. Create one and invite friends, or join with a code.'))+'</div>';
+  else h+=L.map(function(g){return '<button type="button" class="fr rmb" data-a="gpopen" data-id="'+g.id+'"><div class="fav">'+esc((g.name||'?').charAt(0))+'</div><div class="grow"><div class="nm"><span class="t">'+esc(g.name)+'</span>'+(g.role==='admin'?' <span class="small muted">· '+esc(pkL('أدمن','Admin'))+'</span>':'')+'</div><div class="small muted num">'+esc(pkL(g.members+' عضو · '+g.rooms+' روم نشط',g.members+' members · '+g.rooms+' active rooms'))+'</div></div>'+ic(S.lang==='ar'?'chevL':'chevR',16)+'</button>'}).join('');
+  h+=gpChallenges();
+  return h}
+
+/* ---------- 1v1 challenges between friends ---------- */
+function gpChallenges(){
+  var h='',C=GP.chl,F=(FR.list||[]),ar=S.lang==='ar';
+  h+='<div class="sh" style="margin-top:20px"><h2 class="hubh">⚔️ '+esc(pkL('تحدي الأصدقاء','Friend challenges'))+'</h2><button type="button" class="chip" data-a="chnew" aria-pressed="'+GP.cnew+'">'+ic('plus',16)+esc(pkL('تحدٍّ','New'))+'</button></div>';
+  if(GP.cnew){
+    if(!F.length)h+='<div class="muted small">'+esc(pkL('أضف أصدقاء أولاً من تبويب الأصدقاء.','Add friends first from the Friends tab.'))+'</div>';
+    else h+='<div class="nowf"><div class="small muted">'+esc(pkL('مع منو؟','With whom?'))+'</div><div class="kchips">'+F.map(function(f){return '<button type="button" class="chip" data-a="chpick" data-id="'+esc(f.code)+'" aria-pressed="'+(GP.cf===f.code)+'">'+esc(frNm(f))+'</button>'}).join('')+'</div>'+
+      '<div class="small muted">'+esc(pkL('كم يوم؟','How many days?'))+'</div><div class="kchips">'+[3,7].map(function(d){return '<button type="button" class="chip" data-a="chdays" data-id="'+d+'" aria-pressed="'+(GP.cd===d)+'">'+esc(pkL(d+' أيام',d+' days'))+'</button>'}).join('')+'</div>'+
+      '<button type="button" class="btn" data-a="chsend"'+(GP.cf&&!GP.busy?'':' disabled')+'>'+esc(pkL('أرسل التحدي','Send challenge'))+'</button></div>'}
+  if(C===null)return h;
+  if(!C.length&&!GP.cnew)h+='<div class="muted small" style="padding-block:6px">'+esc(pkL('ما عندك تحديات. تحدَّ صديق: من يجمع نقاط أكثر خلال أيام التحدي يفوز.','No challenges yet. Challenge a friend: whoever earns more points during the challenge wins.'))+'</div>';
+  h+=C.map(function(c){
+    var nm=frNm({code:c.code,name:c.name}),sub='',right='',btn='';
+    if(c.status==='pending'){
+      if(c.mine){sub=pkL('بانتظار رده · '+c.days+' أيام',"Waiting for their reply · "+c.days+' days');btn='<button type="button" class="chip" data-a="chno" data-id="'+c.id+'"'+(GP.busy?' disabled':'')+'>'+esc(pkL('إلغاء','Cancel'))+'</button>'}
+      else{sub=pkL('يتحداك لمدة '+c.days+' أيام','Challenges you for '+c.days+' days');btn='<button type="button" class="btn" data-a="chok" data-id="'+c.id+'"'+(GP.busy?' disabled':'')+'>'+esc(pkL('قبول','Accept'))+'</button><button type="button" class="btn ghost" data-a="chno" data-id="'+c.id+'"'+(GP.busy?' disabled':'')+'>'+esc(pkL('رفض','Decline'))+'</button>'}
+      return '<div class="fr chr"><div class="fav">'+avInner(c.photo,nm)+'</div><div class="grow"><div class="nm"><span class="t">'+esc(nm)+'</span></div><div class="small muted">'+esc(sub)+'</div></div><div class="rqb">'+btn+'</div></div>'}
+    var my=+c.my||0,th=+c.their||0;
+    if(c.over)sub=my>th?pkL('انتهى التحدي · فزت 🏆','Finished · you won 🏆'):my<th?pkL('انتهى التحدي · خسرت','Finished · you lost'):pkL('انتهى التحدي · تعادل','Finished · a tie');
+    else sub=pkL('باقي '+c.left+' يوم','~'+c.left+' day(s) left');
+    return '<div class="fr chr"><div class="fav">'+avInner(c.photo,nm)+'</div><div class="grow"><div class="nm"><span class="t">'+esc(nm)+'</span></div><div class="small muted">'+esc(sub)+'</div></div>'+
+      '<div class="fs num" dir="ltr"><b class="pts">'+my+'</b> <span class="muted">:</span> <b>'+th+'</b></div></div>'}).join('');
+  if(C.length)h+='<div class="lg" style="padding-top:6px"><span>'+esc(pkL('النقاط نفسها: نقطة لكل دقيقة مذاكرة + 10 لكل يوم إنجاز. أنت أول رقم.','Same points: 1 per study minute + 10 per active day. You are the first number.'))+'</span></div>';
+  return h}
+
+/* ---------- one group ---------- */
+function gpPeople(G){
+  return (G.members||[]).map(function(m){var nm=m.name||pkL('طالب','Student');
+    return '<div class="fr"><div class="fav">'+avInner(m.photo,nm)+'</div><div class="grow"><div class="nm"><span class="t">'+esc(m.me?nm+' · '+pkL('أنت','You'):nm)+'</span>'+(m.role==='admin'?' <span class="small muted">· '+esc(pkL('أدمن','Admin'))+'</span>':'')+'</div></div>'+
+      (!m.me&&m.ref?(G.owner?'<button type="button" class="x rp" data-a="gprole" data-id="'+esc(m.ref)+'" data-k="'+(m.role==='admin'?0:1)+'" aria-label="'+esc(m.role==='admin'?pkL('إزالة الأدمن','Remove admin'):pkL('تعيين أدمن','Make admin'))+'">'+(m.role==='admin'?'⬇️':'⭐')+'</button>':'')+(G.admin&&m.role!=='admin'?'<button type="button" class="x rp" data-a="gpkick" data-id="'+esc(m.ref)+'" aria-label="'+esc(pkL('طرد','Remove'))+'">✕</button>':'')+'<button type="button" class="x rp" data-a="gprep" data-id="'+esc(m.ref)+'" aria-label="'+esc(pkL('إبلاغ','Report'))+'">🚩</button><button type="button" class="x rp" data-a="gpblock" data-id="'+esc(m.ref)+'" aria-label="'+esc(pkL('حظر','Block'))+'">🚫</button>':'')+'</div>'}).join('')}
+function gpGroupBoard(){
+  var off=GP.bw||0,w=frWk(off),ar=S.lang==='ar',B=GP.gb,h='';
+  h+='<div class="sh" style="margin-top:16px"><h2 class="hubh">🏆 '+esc(pkL('ترتيب الكروب','Group ranking'))+'</h2></div>';
+  h+='<div class="mnav"><button type="button" data-a="gbmove" data-id="-1"'+(off<=-4?' disabled':'')+' aria-label="'+esc(pkL('الأسبوع السابق','Previous week'))+'">'+ic(ar?'chevR':'chevL',18)+'</button><h2 class="num">'+esc(off===0?pkL('هذا الأسبوع','This week'):fmtDate(w.a)+' – '+fmtDate(w.b))+'</h2><button type="button" data-a="gbmove" data-id="1"'+(off>=0?' disabled':'')+' aria-label="'+esc(pkL('الأسبوع التالي','Next week'))+'">'+ic(ar?'chevL':'chevR',18)+'</button></div>';
+  if(!B)return h+'<div class="muted small">'+esc(pkL('جارٍ التحميل…','Loading…'))+'</div>';
+  h+=B.map(function(r){return brRow({rank:r.rank,name:r.name,photo:r.photo,pts:r.pts,me:!!r.me,ref:null},B)}).join('');
+  h+='<div class="lg" style="padding-top:6px"><span>'+esc(pkL('نقاطك الأسبوعية تظهر لأعضاء الكروب فقط.','Your weekly points are visible to group members only.'))+'</span></div>';
+  return h}
+function gpGroupView(){
+  var G=GP.g,h='';
+  if(!G)return '<div class="sh">'+gpBack()+'</div><div class="muted small">'+esc(pkL('جارٍ التحميل…','Loading…'))+'</div>';
+  h+='<div class="sh">'+gpBack()+'<h2 class="hubh" style="min-width:0"><span class="t" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(G.name)+'</span></h2></div>'+gpMsgBox();
+  if(G.admin){
+    h+='<div class="bjoin"><div class="small muted">'+esc(pkL('كود الكروب: شاركه حتى يدخلون الأعضاء','Group code: share it so people can join'))+'</div>'+
+      '<div class="fidrow"><b class="num" dir="ltr">'+esc(G.code||'')+'</b><button type="button" class="chip" data-a="gpcopy">'+ic('copy',16)+esc(pkL('نسخ','Copy'))+'</button></div>'+
+      '<div class="kchips"><button type="button" class="chip" data-a="gplock" aria-pressed="'+!!G.locked+'">'+esc(G.locked?pkL('🔒 الكود مقفول (اضغط للفتح)','🔒 Code locked (tap to open)'):pkL('قفل الكود','Lock the code'))+'</button><button type="button" class="chip" data-a="gpreset">'+esc(pkL('تغيير الكود','New code'))+'</button></div>'+
+      '<div class="kchips"><button type="button" class="chip" data-a="gpaddf" aria-pressed="'+GP.addf+'">'+ic('plus',16)+esc(pkL('أضف من أصدقائي','Add from friends'))+'</button><button type="button" class="chip" data-a="gprepo" aria-pressed="'+GP.repo+'">'+esc(pkL('البلاغات','Reports')+(G.reports?' ('+G.reports+')':''))+'</button><button type="button" class="chip" data-a="gpren" aria-pressed="'+GP.ren+'">'+esc(pkL('إعادة تسمية','Rename'))+'</button></div>';
+    if(GP.ren)h+='<form id="fGrpRen" class="nowf" autocomplete="off"><input id="gnIn" class="nowin" maxlength="40" value="'+esc(GP.nm)+'" placeholder="'+esc(pkL('الاسم الجديد','New name'))+'"><button class="btn" type="submit"'+(GP.busy?' disabled':'')+'>'+esc(pkL('حفظ الاسم','Save name'))+'</button></form>';
+    if(GP.addf){var fl=(FR.list||[]);
+      h+=fl.length?'<div class="kchips">'+fl.map(function(f){return '<button type="button" class="chip" data-a="gpadd" data-id="'+esc(f.code)+'"'+(GP.busy?' disabled':'')+'>'+esc(frNm(f))+'</button>'}).join('')+'</div>':'<div class="muted small">'+esc(pkL('ما عندك أصدقاء حتى تضيفهم.','No friends to add yet.'))+'</div>'}
+    h+='</div>'}
+  if(GP.repo&&G.admin)h+=gpReports();
+  h+='<div class="sh" style="margin-top:16px"><h2 class="hubh">🚪 '+esc(pkL('الرومات','Rooms'))+'</h2><button type="button" class="chip" data-a="gpnewr" aria-pressed="'+GP.newr+'">'+ic('plus',16)+esc(pkL('روم','Room'))+'</button></div>';
+  if(GP.newr)h+='<form id="fRoomNew" class="nowf" autocomplete="off"><input id="rnIn" class="nowin" maxlength="40" value="'+esc(GP.rn)+'" placeholder="'+esc(pkL('اسم الروم (مثلاً: فيزياء)','Room name'))+'"><div class="kchips"><button type="button" class="chip" data-a="rkind" data-id="public" aria-pressed="'+(GP.rk==='public')+'">🌐 '+esc(pkL('عام (كل الكروب)','Public (whole group)'))+'</button><button type="button" class="chip" data-a="rkind" data-id="private" aria-pressed="'+(GP.rk==='private')+'">🔒 '+esc(pkL('خاص (بدعوة)','Private (invite only)'))+'</button></div><button class="btn" type="submit"'+(GP.busy?' disabled':'')+'>'+esc(pkL('افتح الروم','Open room'))+'</button></form>';
+  var R=G.rooms||[];
+  h+=R.length?R.map(function(r){return '<button type="button" class="fr rmb" data-a="gproom" data-id="'+r.id+'"><span class="rdot'+(r.green?' g':'')+'" aria-hidden="true"></span><div class="grow"><div class="nm"><span class="t">'+(r.kind==='private'?'🔒 ':'🌐 ')+esc(r.name)+'</span></div><div class="small muted num">'+esc(pkL(r.count+' بالروم · '+r.green+' يدرس الآن',r.count+' inside · '+r.green+' studying now'))+'</div></div>'+ic(S.lang==='ar'?'chevL':'chevR',16)+'</button>'}).join(''):'<div class="muted small" style="padding-block:6px">'+esc(pkL('ماكو رومات الحين. افتح روم وادرسوا سوا. الروم ينحذف إذا ماكو نشاط نص ساعة، والكروب يبقى.','No rooms right now. Open one and study together. A room is removed after 30 inactive minutes; the group stays.'))+'</div>';
+  h+=gpGroupBoard();
+  h+='<div class="sh" style="margin-top:16px"><h2 class="hubh">🧑‍🤝‍🧑 '+esc(pkL('الأعضاء','Members'))+' <span class="num small muted">'+(G.members||[]).length+'/30</span></h2></div>'+gpPeople(G);
+  h+=gpChat(pkL('دردشة الكروب','Group chat'));
+  h+='<div class="kchips" style="margin-top:14px"><button type="button" class="chip" data-a="gpleave">'+esc(pkL('خروج من الكروب','Leave group'))+'</button>'+(G.owner?'<button type="button" class="chip" data-a="gpdel">'+esc(pkL('حذف الكروب','Delete group'))+'</button>':'')+'</div>';
+  return h}
+function gpReports(){
+  var R=GP.reps;
+  if(!R)return '<div class="muted small">'+esc(pkL('جارٍ التحميل…','Loading…'))+'</div>';
+  if(!R.length)return '<div class="muted small" style="padding-block:6px">'+esc(pkL('ماكو بلاغات جديدة 👌','No new reports 👌'))+'</div>';
+  return R.map(function(r){var ms=(r.msgs||[]).slice(0,3).map(function(x){return '<div class="small" dir="auto">“'+esc(String(x).slice(0,120))+'”</div>'}).join('');
+    return '<div class="rpt"><div class="nm"><span class="t">'+esc(r.name||pkL('طالب','Student'))+'</span>'+(r.room?' <span class="small muted">· '+esc(r.room)+'</span>':'')+'</div>'+ms+
+      '<div class="kchips" style="margin-top:6px"><button type="button" class="chip" data-a="gprres" data-id="'+r.id+'" data-k="1"'+(GP.busy?' disabled':'')+'>'+esc(pkL('طرد','Remove'))+'</button><button type="button" class="chip" data-a="gprres" data-id="'+r.id+'" data-k="0"'+(GP.busy?' disabled':'')+'>'+esc(pkL('تجاهل','Dismiss'))+'</button></div></div>'}).join('')}
+
+/* ---------- chat (group or room; 30 messages a day per person across everything) ---------- */
+function gpChat(title){
+  var M=(GP.gm&&GP.gm.msgs)||[],h='<div class="sh" style="margin-top:16px"><h2 class="hubh">💬 '+esc(title)+'</h2><span class="small muted num">'+esc(pkL('باقي لك '+GP.mleft+' رسالة اليوم',GP.mleft+' messages left today'))+'</span></div>';
+  h+='<div class="chl" id="gpChat">'+(M.length?M.map(function(m){
+    var d=new Date(m.at),tm=isNaN(d)?'':d.toLocaleTimeString(S.lang==='ar'?'ar':'en',{hour:'numeric',minute:'2-digit'});
+    return '<div class="chm'+(m.me?' me':'')+'" dir="auto">'+(m.me?'':'<b class="mnm">'+esc(m.name||pkL('طالب','Student'))+'</b>')+esc(m.body)+'<span class="tm">'+esc(tm)+(!m.me&&m.ref?' <button type="button" class="x rp" data-a="gprep" data-id="'+esc(m.ref)+'" aria-label="'+esc(pkL('إبلاغ','Report'))+'">🚩</button><button type="button" class="x rp" data-a="gpblock" data-id="'+esc(m.ref)+'" aria-label="'+esc(pkL('حظر','Block'))+'">🚫</button>':'')+'</span></div>'}).join(''):'<div class="muted small" style="margin:auto;text-align:center">'+esc(pkL('ابدأ المحادثة 👋','Start the conversation 👋'))+'</div>')+'</div>';
+  h+='<form id="fGmsg" class="chf" autocomplete="off"><input id="gmIn" maxlength="1000" value="'+esc(GP.mt)+'" placeholder="'+esc(GP.mleft>0?pkL('اكتب رسالة','Write a message'):pkL('خلصت رسائل اليوم','No messages left today'))+'"'+(GP.mleft>0?'':' disabled')+'><button class="btn" type="submit"'+(GP.mleft>0&&!GP.busy?'':' disabled')+'>'+esc(pkL('إرسال','Send'))+'</button></form>';
+  return h}
+
+/* ---------- one room: who is studying (green blink) / who stopped (red blink) ---------- */
+function rmRow(m){
+  var nm=m.name||pkL('طالب','Student'),st=m.state,tt='';
+  if(st==='green')tt=(m.subject?m.subject+' · ':'')+pkL('باقي '+m.left+' د',m.left+' min left');
+  else if(st==='red')tt=pkL('توقّف عن الدراسة','Stopped studying');
+  else if(st==='done')tt=pkL('خلّص جلسته ✓','Finished the session ✓');
+  else tt=pkL('بالروم','In the room');
+  return '<div class="fr"><span class="rdot '+(st==='green'?'g':st==='red'?'r':'')+'" role="img" aria-label="'+esc(tt)+'"></span><div class="fav">'+avInner(m.photo,nm)+'</div><div class="grow"><div class="nm"><span class="t">'+esc(m.me?nm+' · '+pkL('أنت','You'):nm)+'</span></div><div class="small '+(st==='red'?'rtx':'muted')+'">'+esc(tt)+'</div></div>'+
+    (!m.me&&m.ref?'<button type="button" class="x rp" data-a="gprep" data-id="'+esc(m.ref)+'" aria-label="'+esc(pkL('إبلاغ','Report'))+'">🚩</button><button type="button" class="x rp" data-a="gpblock" data-id="'+esc(m.ref)+'" aria-label="'+esc(pkL('حظر','Block'))+'">🚫</button>':'')+'</div>'}
+function rmBox(){
+  var me=((GP.rm&&GP.rm.members)||[]).filter(function(x){return x.me})[0]||{},timer=TM.running&&TM.mode==='focus',h='';
+  if(me.state==='green')
+    return '<div class="nowc"><div style="min-width:0"><div class="small muted">'+esc(timer?pkL('مؤقّتك شغّال، يظهر أخضر تلقائياً','Your timer is running, shown green automatically'):pkL('تدرس الآن (يشوفك أعضاء الروم)','Studying now (the room sees you)'))+'</div><b>'+esc((me.subject?me.subject+' · ':'')+pkL('باقي '+me.left+' د',me.left+' min left'))+'</b></div>'+(timer?'':'<button type="button" class="chip" data-a="rmstop">'+esc(pkL('توقّفت','I stopped'))+'</button>')+'</div>';
+  if(timer)return '<div class="nowc"><div class="small muted">'+esc(pkL('مؤقّتك شغّال. يظهر اسمك أخضر بالروم خلال لحظات.','Your timer is running. You will show green in the room in a moment.'))+'</div></div>';
+  var k=GP.nk||'lesson',T=nowTiles(k);
+  h+='<form id="fRoomNow" class="nowf"><div class="small muted">'+esc(pkL('شنو راح تسوي؟','What will you do?'))+'</div><div class="kchips">'+nowKinds().map(function(x){return '<button type="button" class="chip" data-a="rnkind" data-id="'+x[0]+'" aria-pressed="'+(k===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>';
+  if(k==='custom')h+='<input id="rnowIn" class="nowin" maxlength="36" value="'+esc(GP.nc)+'" placeholder="'+esc(pkL('اكتب اسم الشي اللي تدرسه','Type what you are studying'))+'" autocomplete="off">';
+  else if(T.length)h+='<div class="ptiles">'+T.map(function(x,n){return '<button type="button" class="pt" style="--c:'+x.c+'" data-a="rntile" data-id="'+n+'" aria-pressed="'+(GP.ns===x.n)+'">'+ic(x.i,22)+'<span>'+esc(x.n)+'</span></button>'}).join('')+'</div>';
+  else h+='<div class="muted small">'+esc(pkL('ما عندك مواد. أضف مواد من تبويب «المواد» أو اختر «مخصص».','You have no subjects. Add some in the Subjects tab or pick “Custom”.'))+'</div>';
+  h+='<div class="small muted">'+esc(pkL('كم تتوقع تخلص؟','How long will you study?'))+'</div><div class="kchips">'+[15,30,45,60,90,120].map(function(m){return '<button type="button" class="chip" data-a="rndur" data-id="'+m+'" aria-pressed="'+(GP.nd===m)+'">'+esc(durLbl(m))+'</button>'}).join('')+'</div>'+
+    '<button class="btn" type="submit"'+(GP.busy?' disabled':'')+'>'+esc(pkL('ابدأ','Start'))+'</button></form>';
+  return h}
+function gpRoomView(){
+  var R=GP.rm,h='';
+  if(!R)return '<div class="sh">'+gpBack()+'</div><div class="muted small">'+esc(pkL('جارٍ التحميل…','Loading…'))+'</div>';
+  h+='<div class="sh">'+gpBack()+'<h2 class="hubh" style="min-width:0"><span class="t" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(R.kind==='private'?'🔒 ':'🌐 ')+esc(R.name)+'</span></h2></div>'+gpMsgBox();
+  h+=rmBox();
+  h+='<div class="sh" style="margin-top:14px"><h2 class="hubh">'+esc(pkL('بالروم','In the room'))+' <span class="num small muted">'+(R.members||[]).length+'</span></h2></div>';
+  h+=(R.members||[]).map(rmRow).join('');
+  if(R.admin&&R.kind==='private'){
+    h+='<div class="kchips" style="margin-top:8px"><button type="button" class="chip" data-a="rminvo" aria-pressed="'+GP.inv+'">'+ic('plus',16)+esc(pkL('ادعُ عضو','Invite a member'))+'</button></div>';
+    if(GP.inv)h+=(R.invitable||[]).length?'<div class="kchips">'+R.invitable.map(function(m){return '<button type="button" class="chip" data-a="rminv" data-id="'+esc(m.ref)+'"'+(GP.busy?' disabled':'')+'>'+esc(m.name||pkL('طالب','Student'))+'</button>'}).join('')+'</div>':'<div class="muted small">'+esc(pkL('كل أعضاء الكروب بالروم.','All group members are already in.'))+'</div>'}
+  if(R.admin){h+='<div class="kchips" style="margin-top:8px"><button type="button" class="chip" data-a="gprepo" aria-pressed="'+GP.repo+'">'+esc(pkL('البلاغات','Reports'))+'</button></div>';if(GP.repo)h+=gpReports()}
+  h+=gpChat(pkL('دردشة الروم','Room chat'));
+  h+='<div class="lg" style="padding-top:8px"><span>'+esc(pkL('🟢 يدرس الآن · 🔴 توقّف عن الدراسة. الروم ينحذف إذا ماكو نشاط نص ساعة، والكروب يبقى.','🟢 studying now · 🔴 stopped. The room is removed after 30 inactive minutes; the group stays.'))+'</span></div>';
+  h+='<div class="kchips" style="margin-top:10px"><button type="button" class="chip" data-a="rmleave">'+esc(pkL('خروج من الروم','Leave room'))+'</button></div>';
+  return h}
+
+/* ---------- the real timer drives the room: running = green, paused/stopped = red ---------- */
+function rmGone(e){if(gpGone(e)||/bad_target/.test(String(e&&e.message||''))){RM.rid=0;RM.manual=0;rmSave()}}
+function rmTimerHook(){try{
+  if(!RM.rid||!sbOn()||!USER||TM.mode!=='focus')return;
+  if(TM.running){var sb=subj(TM.subj),m=Math.max(1,Math.ceil((TM.endAt-Date.now())/60000));RM.manual=0;
+    frRpc('room_state',{p_room:RM.rid,p_mode:'start',p_subject:sb?sb.name:pkL('مؤقّت','Timer'),p_minutes:m}).then(rmAfter,rmGone)}
+  else{RM.manual=0;frRpc('room_state',{p_room:RM.rid,p_mode:'stop'}).then(rmAfter,rmGone)}}catch(e){}}
+function rmDone(){try{
+  if(!RM.rid||!sbOn()||!USER||TM.mode!=='focus')return;
+  frRpc('room_state',{p_room:RM.rid,p_mode:'done'}).then(rmAfter,rmGone)}catch(e){}}
+function rmAfter(){if(S.view==='hub'&&UI.hubTab==='ch'&&GP.rid){GP.sig='';gpPull(true)}}
+function rmBeat(){try{
+  if(!RM.rid||!sbOn()||!USER)return;
+  if(TM.running&&TM.mode==='focus')frRpc('room_state',{p_room:RM.rid,p_mode:'beat',p_minutes:Math.max(1,Math.ceil((TM.endAt-Date.now())/60000))}).then(null,rmGone);
+  else if(RM.manual){
+    if(Date.now()<RM.manual)frRpc('room_state',{p_room:RM.rid,p_mode:'beat',p_minutes:Math.max(1,Math.ceil((RM.manual-Date.now())/60000))}).then(null,rmGone);
+    else{RM.manual=0;frRpc('room_state',{p_room:RM.rid,p_mode:'done'}).then(null,rmGone)}}}catch(e){}}
+setInterval(rmBeat,60000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)rmBeat()});
+var _gpTick=0;setInterval(function(){_gpTick++;if(USER&&!document.hidden&&S.view==='hub'&&UI.hubTab==='ch'&&!GP.busy&&!UI.sheet&&!GP.setup&&(GP.rid||_gpTick%2===0))gpPull(true)},5000);
+document.addEventListener('input',function(e){var t=e.target,i=t&&t.id;
+  if(i==='gmIn')GP.mt=t.value;else if(i==='gnIn')GP.nm=t.value;else if(i==='gjIn')GP.jc=t.value;else if(i==='rnIn')GP.rn=t.value;else if(i==='rnowIn')GP.nc=t.value});
+
+/* ---------- clicks ---------- */
+function gpClick(a,id,el){
+  if(a==='schsub'){UI.schSub=id;render();return true}
+  if(a==='gpnewg'){GP.newg=!GP.newg;GP.joing=false;gpSet('');paintGp();return true}
+  if(a==='gpjoing'){GP.joing=!GP.joing;GP.newg=false;gpSet('');paintGp();return true}
+  if(a==='gpopen'){GP.gid=+id;GP.g=null;GP.gm=null;GP.rid=0;GP.rm=null;GP.reps=null;GP.repo=false;GP.addf=false;GP.newr=false;GP.ren=false;GP.gb=null;GP.bw=0;GP.mt='';GP.sig='';gpSet('');paintGp();gpPull(false);return true}
+  if(a==='gpback'){
+    if(GP.rid){GP.rid=0;GP.rm=null;GP.gm=null;GP.inv=false;GP.mt='';GP.repo=false;GP.reps=null}else{GP.gid=0;GP.g=null;GP.gm=null;GP.reps=null;GP.repo=false}
+    GP.sig='';gpSet('');paintGp();gpPull(false);return true}
+  if(a==='gpnewr'){GP.newr=!GP.newr;paintGp();return true}
+  if(a==='rkind'){GP.rk=id==='private'?'private':'public';paintGp();return true}
+  if(a==='gproom'){var rid=+id;
+    gpAct('join_room',{p_room:rid},'',function(){GP.rid=rid;GP.rm=null;GP.gm=null;GP.mt='';GP.inv=false;RM.rid=rid;RM.gid=GP.gid;rmSave()});return true}
+  if(a==='rnkind'){GP.nk=id;GP.ns='';paintGp();return true}
+  if(a==='rntile'){var tl=nowTiles(GP.nk)[+id];if(tl){GP.ns=tl.n;paintGp()}return true}
+  if(a==='rndur'){GP.nd=+id;paintGp();return true}
+  if(a==='rmstop'){RM.manual=0;gpAct('room_state',{p_room:GP.rid,p_mode:'stop'});return true}
+  if(a==='rmleave'){askConfirm(pkL('تخرج من هذا الروم؟','Leave this room?'),{title:pkL('خروج','Leave'),ok:pkL('خروج','Leave'),cancel:pkL('إلغاء','Cancel')}).then(function(y){
+      if(!y)return;var rid=GP.rid;gpAct('leave_room',{p_room:rid},'',function(){if(RM.rid===rid){RM.rid=0;RM.manual=0;rmSave()}GP.rid=0;GP.rm=null;GP.gm=null})});return true}
+  if(a==='rminvo'){GP.inv=!GP.inv;paintGp();return true}
+  if(a==='rminv'){gpAct('invite_to_room',{p_room:GP.rid,p_ref:id},pkL('تمت الدعوة ✓','Invited ✓'));return true}
+  if(a==='gpcopy'){var c=GP.g&&GP.g.code;if(c)try{navigator.clipboard.writeText(c).then(function(){showToast(pkL('تم نسخ كود الكروب','Group code copied'))},function(){})}catch(x){}return true}
+  if(a==='gplock'){gpAct('set_group_code',{p_group:GP.gid,p_lock:!(GP.g&&GP.g.locked),p_reset:false});return true}
+  if(a==='gpreset'){askConfirm(pkL('تغيّر كود الكروب؟ الكود القديم يبطل.','Change the group code? The old code stops working.'),{title:pkL('تغيير الكود','New code'),ok:pkL('غيّر','Change'),cancel:pkL('إلغاء','Cancel')}).then(function(y){
+      if(y)gpAct('set_group_code',{p_group:GP.gid,p_lock:false,p_reset:true},pkL('تم تغيير الكود ✓','Code changed ✓'))});return true}
+  if(a==='gpaddf'){GP.addf=!GP.addf;paintGp();return true}
+  if(a==='gpadd'){gpAct('add_to_group',{p_group:GP.gid,p_friend_code:id},pkL('تمت الإضافة ✓','Added ✓'));return true}
+  if(a==='gpleave'){askConfirm(pkL('تخرج من الكروب؟','Leave this group?'),{title:pkL('خروج','Leave'),ok:pkL('خروج','Leave'),cancel:pkL('إلغاء','Cancel'),danger:true}).then(function(y){
+      if(!y)return;var g=GP.gid;gpAct('leave_group',{p_group:g},'',function(){if(RM.gid===g){RM.rid=0;RM.manual=0;rmSave()}GP.gid=0;GP.g=null;GP.gm=null})});return true}
+  if(a==='gpdel'){askConfirm(pkL('تحذف الكروب نهائياً بكل رواماته ورسائله؟','Delete the group for good, with all its rooms and messages?'),{title:pkL('حذف الكروب','Delete group'),ok:pkL('احذف','Delete'),cancel:pkL('إلغاء','Cancel'),danger:true}).then(function(y){
+      if(!y)return;var g=GP.gid;gpAct('delete_group',{p_group:g},'',function(){if(RM.gid===g){RM.rid=0;RM.manual=0;rmSave()}GP.gid=0;GP.g=null;GP.gm=null})});return true}
+  if(a==='gpkick'){askConfirm(pkL('تطرد هذا العضو من الكروب؟','Remove this member from the group?'),{title:pkL('طرد','Remove'),ok:pkL('طرد','Remove'),cancel:pkL('إلغاء','Cancel'),danger:true}).then(function(y){
+      if(y)gpAct('kick_member',{p_group:GP.gid,p_ref:id})});return true}
+  if(a==='gprep'){askConfirm(pkL('تبلّغ عن هذا العضو؟ يوصل البلاغ لأدمن الكروب.','Report this member? The group admin will see it.'),{title:pkL('إبلاغ','Report'),ok:pkL('إبلاغ','Report'),cancel:pkL('إلغاء','Cancel'),danger:true}).then(function(y){
+      if(!y)return;gpRpc('report_group_member',{p_group:GP.gid,p_room:GP.rid||null,p_ref:id,p_reason:'inappropriate'}).then(function(){showToast(pkL('وصل البلاغ للأدمن، شكراً','The admin got your report, thanks'))},function(e){showToast(gpMsg(e)||pkL('تعذّر إرسال البلاغ','Could not send the report'))})});return true}
+  if(a==='gbmove'){var nb=Math.min(0,Math.max(-4,(GP.bw||0)+(+id)));if(nb===GP.bw)return true;GP.bw=nb;GP.gb=null;GP.sig='';paintGp();gpPull(false);return true}
+  if(a==='gpren'){GP.ren=!GP.ren;if(GP.ren)GP.nm=(GP.g&&GP.g.name)||'';paintGp();return true}
+  if(a==='gprole'){var mk=el.getAttribute('data-k')==='1';gpAct('set_member_role',{p_group:GP.gid,p_ref:id,p_admin:mk},mk?pkL('صار أدمن ⭐','Now an admin ⭐'):pkL('انشالت صلاحية الأدمن','Admin removed'));return true}
+  if(a==='gpblock'){askConfirm(pkL('تحظر هذا الشخص؟ ما تشوف رسائله وما يشوف رسائلك، وتنفك الصداقة بينكم.','Block this person? You will not see each other’s messages and any friendship ends.'),{title:pkL('حظر','Block'),ok:pkL('حظر','Block'),cancel:pkL('إلغاء','Cancel'),danger:true}).then(function(y){
+      if(y)gpAct('block_group_member',{p_group:GP.gid,p_ref:id},pkL('تم الحظر','Blocked'),function(){FR.t=0;frLoad()})});return true}
+  if(a==='gprepo'){GP.repo=!GP.repo;GP.reps=null;GP.sig='';paintGp();if(GP.repo)gpPull(false);return true}
+  if(a==='gprres'){gpAct('resolve_group_report',{p_report:+id,p_kick:el.getAttribute('data-k')==='1'});return true}
+  if(a==='chnew'){GP.cnew=!GP.cnew;GP.cf='';gpSet('');paintGp();return true}
+  if(a==='chpick'){GP.cf=id;paintGp();return true}
+  if(a==='chdays'){GP.cd=+id;paintGp();return true}
+  if(a==='chsend'){if(!GP.cf)return true;var cf=GP.cf;gpAct('send_challenge',{p_friend_code:cf,p_days:GP.cd},pkL('أُرسل التحدي ✓','Challenge sent ✓'),function(r){if(r==='already')gpSet(pkL('عندكم تحدي قائم','You already have a challenge with them'));GP.cnew=false;GP.cf=''},true);return true}
+  if(a==='chok'){gpAct('respond_challenge',{p_id:+id,p_accept:true},pkL('بدأ التحدي 💪','Challenge on 💪'));return true}
+  if(a==='chno'){gpAct('respond_challenge',{p_id:+id,p_accept:false});return true}
+  return false}
+function gpSubmit(id,e){
+  if(id==='fGrpNew'){e.preventDefault();var n=GP.nm.trim();if(n.length<2){gpSet(gpMsg({message:'bad_name'}));paintGp();return true}
+    gpAct('create_group',{p_name:n},'',function(r){GP.nm='';GP.newg=false;if(r){GP.gid=+r;GP.g=null;GP.gm=null;GP.sig=''}},true);return true}
+  if(id==='fGrpJoin'){e.preventDefault();var c=GP.jc.replace(/[^A-Za-z0-9]/g,'').toUpperCase();if(c.length<6){gpSet(gpMsg({message:'bad_code'}));paintGp();return true}
+    gpAct('join_group',{p_code:c},'',function(r){GP.jc='';GP.joing=false;if(r){GP.gid=+r;GP.g=null;GP.gm=null;GP.sig=''}},true);return true}
+  if(id==='fGrpRen'){e.preventDefault();var gn=GP.nm.trim();if(gn.length<2){gpSet(gpMsg({message:'bad_name'}));paintGp();return true}
+    gpAct('rename_group',{p_group:GP.gid,p_name:gn},pkL('تم تغيير الاسم ✓','Renamed ✓'),function(){GP.ren=false;GP.nm=''});return true}
+  if(id==='fRoomNew'){e.preventDefault();var rn=GP.rn.trim();if(rn.length<2){gpSet(gpMsg({message:'bad_name'}));paintGp();return true}
+    var gid=GP.gid;gpAct('create_room',{p_group:gid,p_name:rn,p_kind:GP.rk},'',function(r){GP.rn='';GP.newr=false;if(r){GP.rid=+r;GP.rm=null;GP.gm=null;GP.mt='';RM.rid=+r;RM.gid=gid;rmSave()}});return true}
+  if(id==='fRoomNow'){e.preventDefault();var k=GP.nk||'lesson',nm=k==='custom'?GP.nc.trim():GP.ns;
+    if(!nm){gpSet(k==='custom'?pkL('اكتب اسم الشي اللي راح تدرسه','Type what you will study'):pkL('اختر المادة أولاً','Pick a subject first'));paintGp();return true}
+    var kl=nowKinds().filter(function(x){return x[0]===k})[0][1],mins=GP.nd||30,rid=GP.rid;
+    gpAct('room_state',{p_room:rid,p_mode:'start',p_subject:(kl+' · '+nm).slice(0,40),p_minutes:mins},'',function(){RM.rid=rid;RM.gid=GP.gid;RM.manual=Date.now()+mins*60000;rmSave();GP.ns='';GP.nc=''});return true}
+  if(id==='fGmsg'){e.preventDefault();var t=GP.mt.trim();if(!t||GP.busy)return true;
+    var body={p_group:GP.gid,p_room:GP.rid||null,p_text:t};GP.busy=true;paintGp();
+    gpRpc('send_gmsg',body).then(function(left){GP.mt='';if(typeof left==='number')GP.mleft=left},function(er){var m=gpMsg(er);if(m)gpSet(m)}).then(function(){GP.busy=false;GP.sig='';return gpPull(true)}).then(function(){paintGp()});return true}
+  return false}
+
 
 /* ---------- 3) important-note cards ---------- */
 function notesCard(){
@@ -3246,22 +3595,19 @@ function hubSheet(k){
      '<button class="btn" type="submit">'+t('saveBtn')+'</button>'+(en?'<button class="btn ghost" type="button" data-a="ndel">'+pkL('حذف','Delete')+'</button>':'')+'</form>'}
   return ''}
 
-setInterval(function(){var a=document.activeElement;if(USER&&!document.hidden&&S.view==='hub'&&UI.hubTab==='fr'&&!FR.busy&&!UI.sheet&&!(a&&/INPUT|TEXTAREA/.test(a.tagName)))frLoad()},60000);
+setInterval(function(){var a=document.activeElement;if(USER&&!document.hidden&&S.view==='hub'&&(UI.hubTab==='fr'||UI.hubTab==='rk')&&!FR.busy&&!UI.sheet&&!(a&&/INPUT|TEXTAREA/.test(a.tagName)))frLoad()},60000);
 /* ---------- events ---------- */
 document.addEventListener('input',function(e){if(e.target&&e.target.id==='frIn'){FR.add=e.target.value;FR.msg=''}else if(e.target&&e.target.id==='nowIn')FR.now=e.target.value});
 document.addEventListener('click',function(e){
   var el=e.target.closest&&e.target.closest('[data-a]');if(!el)return;
   var a=el.getAttribute('data-a'),id=el.getAttribute('data-id');
+  if(gpClick(a,id,el))return;
   if(a==='stkshare'){stkShare()}
   else if(a==='stkgo'){closeSheet();S.view='timer';UI.confirm='';window.scrollTo({top:0,behavior:'auto'});render(true)}
   else if(a==='stkfr'){closeSheet();UI.hubTab='fr';S.view='hub';UI.confirm='';window.scrollTo({top:0,behavior:'auto'});render(true)}
   else if(a==='stkperm'){askPerm(function(){stkRepaint()});setTimeout(stkRepaint,1500)}
-  else if(a==='hubtab'){if(UI.hubTab!==id){UI.hubTab=id;render()}}
+  else if(a==='hubtab'){if(UI.hubTab!==id){UI.hubTab=id;render();if(id==='ch')gpOpen()}}
   else if(a==='schcell'){UI.schKey=id;openSheet('schcell')}
-  else if(a==='nkind'){FR.nk=id;FR.nsel='';paintFr()}
-  else if(a==='ntile'){var tl=nowTiles()[+id];if(tl){FR.nsel=tl.n;paintFr()}}
-  else if(a==='ndur'){FR.nd=+id;paintFr()}
-  else if(a==='nowend'){S.nowT='';S.nowAt=0;save();paintFr();frRpc('set_status',{p_text:''}).catch(frErr).then(function(){frLoad()})}
   else if(a==='schdays'){openSheet('schdays')}
   else if(a==='schday'){var dd=+id,ds=(S.sched.days||[]).slice(),ix=ds.indexOf(dd);
     if(ix>=0){if(ds.length>1)ds.splice(ix,1)}else ds.push(dd);
@@ -3282,6 +3628,13 @@ document.addEventListener('click',function(e){
   else if(a==='rqcx'){FR.busy=true;paintFr();
     frRpc('cancel_request',{p_code:id}).catch(frErr).then(function(){frLoad()})}
   else if(a==='frref'){FR.t=Date.now();FR.msg='';frLoad()}
+  else if(a==='bdon'||a==='bdoff'){var bon=a==='bdon';FR.busy=true;paintFr();
+    (bon?frSync(true).catch(function(){}):Promise.resolve()).then(function(){return frRpc('set_board',{p_on:bon})}).then(frBoardLoad)
+     .catch(function(e){if(frIsMissing(e))FR.bsetup=true;else showToast(pkL('تعذّر الحفظ، حاول مرة ثانية','Could not save, try again'))}).then(function(){FR.busy=false;paintFr()})}
+  else if(a==='bdrep'){
+    askConfirm(pkL('تبلّغ عن اسم أو صورة هذا المستخدم؟','Report this user’s name or photo?'),{title:pkL('إبلاغ','Report'),ok:pkL('إبلاغ','Report'),cancel:pkL('إلغاء','Cancel'),danger:true}).then(function(y){
+      if(!y)return;frRpc('report_board_user',{p_ref:id,p_reason:'inappropriate'}).then(function(){showToast(pkL('وصلنا بلاغك، شكراً','Report received, thanks'))},function(){showToast(pkL('تعذّر إرسال البلاغ','Could not send the report'))})})}
+  else if(a==='bwmove'){var nb=Math.min(0,Math.max(-4,(FR.bw||0)+(+id)));if(nb===FR.bw)return;FR.bw=nb;FR.board=null;paintFr();frBoardLoad().then(paintFr)}
   else if(a==='frrm'){
     askConfirm(pkL('تحذف هذا الصديق من القائمة؟','Remove this friend?'),{title:pkL('حذف صديق','Remove friend'),ok:pkL('حذف','Remove'),cancel:pkL('إلغاء','Cancel'),danger:true}).then(function(y){
       if(!y)return;FR.busy=true;paintFr();
@@ -3296,6 +3649,7 @@ document.addEventListener('click',function(e){
 });
 document.addEventListener('submit',function(e){
   var id=e.target.id;
+  if(gpSubmit(id,e))return;
   if(id==='fSch'){e.preventDefault();
     var v=document.getElementById('scT').value.trim().slice(0,30);
     if(v)S.sched.cells[UI.schKey]={t:v};else delete S.sched.cells[UI.schKey];
@@ -3307,12 +3661,6 @@ document.addEventListener('submit',function(e){
     if(en){en.title=tv.title;en.txt=tv.txt;en.color=tv.color;en.pin=tv.pin}
     else S.notes.push({id:uid(),title:tv.title,txt:tv.txt,color:tv.color,pin:tv.pin,ts:Date.now()});
     closeSheet();render()}
-  else if(id==='fNow'){e.preventDefault();
-    var k=FR.nk||'lesson',nm=k==='custom'?(document.getElementById('nowIn')||{value:''}).value.trim():FR.nsel;
-    if(!nm){FR.msg=k==='custom'?pkL('اكتب اسم الشي اللي راح تدرسه','Type what you will study'):pkL('اختر المادة أولاً','Pick a subject first');FR.ok=false;paintFr();return}
-    var kl=nowKinds().filter(function(x){return x[0]===k})[0][1],nt=kl+' · '+nm.slice(0,34)+' · '+(FR.nd||30)+' '+pkL('د','min');
-    S.nowT=nt;S.nowAt=Date.now();FR.now='';FR.nsel='';FR.msg='';save();paintFr();
-    frSync(true).then(function(){return frRpc('set_status',{p_text:nt})}).catch(frErr).then(function(){frLoad()})}
   else if(id==='fNick'){e.preventDefault();
     nkSet(CH.code,document.getElementById('nickIn').value.trim().slice(0,20));
     CH.nk=false;CH.name=frNm(CH.f||{code:CH.code});chHeadPaint();paintFr()}
@@ -3566,6 +3914,133 @@ if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
   if(window.AndroidBridge){/* the files are local inside the app: a service worker only adds start-up time and can serve a stale page */
     navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()})}).catch(function(){})}
   else window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
+</script>
+<script>
+/* [added] Account deletion + user report + in-app privacy policy.
+   Purely additive: it uses its own data-x attribute so the existing click handlers never see these
+   buttons, and it is wrapped in try/catch so a failure here can never break the rest of the app. */
+(function(){
+try{
+  function L(a,e){try{return pkL(a,e)}catch(x){return a}}
+  function toast(m){try{showToast(m)}catch(x){}}
+  function bg(){
+    var c=getComputedStyle(document.body).backgroundColor;
+    if(!c||c==='transparent'||/rgba\(.*,\s*0\)$/.test(c))c=getComputedStyle(document.documentElement).backgroundColor;
+    if(!c||c==='transparent'||/rgba\(.*,\s*0\)$/.test(c))c='#fff';
+    return c}
+  function ask(msg,o){return askConfirm(msg,o)}
+
+  /* ---------- privacy policy (works offline, inside the app) ---------- */
+  var P_AR=[
+    ['البيانات التي نجمعها','بريدك وكلمة مرورك (مشفّرة عند Supabase)، وبيانات الدراسة (المواد والمهام وسجلات الوقت). تبقى على جهازك، ونسخة منها على السيرفر إذا سجّلت بحساب سحابي. ميزة الأصدقاء تحفظ اسمك وكودك وصورتك المصغّرة وحالتك وملخص أيامك والرسائل القصيرة (تنحذف بعد 7 أيام). الإشعارات تحتاج رمز جهازك (FCM). وإذا أبلغت عن مستخدم نحفظ السبب وآخر 10 رسائل منه للمراجعة.'],
+    ['الأطراف الثالثة','Supabase (الحساب والتخزين)، Google Firebase (الإشعارات)، Google Fonts (الخطوط). لا نبيع بياناتك ولا نعرض إعلانات.'],
+    ['الحذف','أسفل هذي النافذة: «حذف حسابي نهائيًا» يحذف الحساب والأصدقاء والرسائل والنسخة السحابية. بيانات جهازك تبقى عليه حتى تحذف التطبيق.'],
+    ['التواصل','تيليجرام @okkj0']];
+  var P_EN=[
+    ['Data we collect','Your email and password (hashed by Supabase) and your study data (subjects, tasks, time logs). It stays on your device, with a copy on the server if you use a cloud account. The friends feature stores your name, code, small profile picture, status, study-days summary and short messages (deleted after 7 days). Notifications need your device FCM token. If you report a user we keep the reason and their last 10 messages to you for review.'],
+    ['Third parties','Supabase (account and storage), Google Firebase (notifications), Google Fonts (fonts). We do not sell your data and show no ads.'],
+    ['Deleting your data','At the bottom of this sheet: “Delete my account permanently” removes your account, friends, messages and cloud copy. Data on your device stays until you uninstall the app.'],
+    ['Contact','Telegram @okkj0']];
+  function showPrivacy(){
+    if(document.getElementById('xPriv'))return;
+    var ar=true;try{ar=S.lang==='ar'}catch(x){}
+    var rows=ar?P_AR:P_EN,o=document.createElement('div');
+    o.id='xPriv';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');o.dir=ar?'rtl':'ltr';
+    var cs=getComputedStyle(document.body);
+    o.style.cssText='position:fixed;left:0;right:0;top:0;bottom:0;z-index:2147483000;overflow:auto;box-sizing:border-box;'+
+      'padding:calc(16px + env(safe-area-inset-top,0px)) 18px calc(28px + env(safe-area-inset-bottom,0px));'+
+      'background:'+bg()+';color:'+cs.color+';font-family:inherit;line-height:1.75';
+    var h='<h2 style="margin:0 0 8px">'+L('سياسة الخصوصية','Privacy policy')+'</h2>';
+    rows.forEach(function(r){h+='<h3 style="margin:18px 0 4px;font-size:1.05em">'+r[0]+'</h3><p style="margin:0">'+r[1]+'</p>'});
+    h+='<button type="button" class="btn" data-x="privclose" style="margin-top:24px;width:100%">'+L('إغلاق','Close')+'</button>';
+    o.innerHTML=h;document.body.appendChild(o)}
+  function closeOv(){
+    var a=document.getElementById('xPriv')||document.getElementById('xRpt');
+    if(a&&a.parentNode){a.parentNode.removeChild(a);var s=document.getElementById('xRptScrim');if(s&&s.parentNode)s.parentNode.removeChild(s);return true}
+    return false}
+  /* Android back button: close our overlay first, otherwise behave exactly as before */
+  var prevBack=window.__appBack;
+  window.__appBack=function(){if(closeOv())return true;return prevBack?prevBack.apply(this,arguments):false};
+
+  /* ---------- report a user ---------- */
+  function pickReason(){
+    return new Promise(function(res){
+      var sc=document.createElement('div'),d=document.createElement('div'),done=false;
+      sc.id='xRptScrim';sc.className='cscrim';d.id='xRpt';d.className='cdlg';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');
+      d.dir=document.documentElement.dir||'rtl';
+      var rs=[['spam',L('رسائل مزعجة','Spam')],['abuse',L('إساءة أو تهديد','Abuse or threats')],['inappropriate',L('محتوى غير لائق','Inappropriate content')],['other',L('سبب آخر','Other')]];
+      d.innerHTML='<h2>'+L('إبلاغ عن هذا الصديق','Report this friend')+'</h2><p>'+L('اختر السبب. المراجعة تتم من المطوّر.','Pick a reason. The developer reviews reports.')+'</p>'+
+        '<div style="display:flex;flex-direction:column;gap:8px">'+rs.map(function(r){return '<button type="button" class="btn ghost" data-r="'+r[0]+'">'+r[1]+'</button>'}).join('')+
+        '<button type="button" class="btn ghost" data-r="">'+L('إلغاء','Cancel')+'</button></div>';
+      function fin(v){if(done)return;done=true;if(d.parentNode)d.parentNode.removeChild(d);if(sc.parentNode)sc.parentNode.removeChild(sc);res(v)}
+      sc.addEventListener('click',function(){fin('')});
+      d.addEventListener('click',function(e){var b=e.target.closest('button[data-r]');if(b)fin(b.getAttribute('data-r'))});
+      document.body.appendChild(sc);document.body.appendChild(d);
+      requestAnimationFrame(function(){sc.classList.add('in');d.classList.add('in')})})}
+  function doReport(){
+    var code=(typeof CH!=='undefined'&&CH&&CH.code)||'';if(!code)return;
+    pickReason().then(function(reason){
+      if(!reason)return;
+      return frRpc('report_user',{p_code:code,p_reason:reason}).then(function(){
+        toast(L('وصل بلاغك، شكرًا لك.','Report sent, thank you.'));
+        return ask(L('تريد حظر هذا الصديق أيضًا؟','Also block this friend?'),{title:L('حظر','Block'),ok:L('حظر','Block'),cancel:L('لا، شكرًا','No thanks'),danger:true}).then(function(y){
+          if(!y)return;
+          return frRpc('block_friend',{p_code:code}).catch(function(){}).then(function(){closeSheet();CH.code='';frLoad()})})})
+    }).catch(function(e){
+      toast(e&&e.offline?L('سجّل الدخول بحساب سحابي حتى تقدر تبلّغ','Sign in with a cloud account to report'):
+        e&&e.message==='rate_limited'?L('بلّغت كثير اليوم، حاول بكرة','Too many reports today, try tomorrow'):
+        L('تعذّر إرسال البلاغ، حاول لاحقًا','Could not send the report, try again later'))})}
+
+  /* ---------- delete account ---------- */
+  function doDelete(){
+    ask(L('يحذف حسابك السحابي نهائيًا: الأصدقاء والرسائل والنسخة المحفوظة على السيرفر. لا يمكن التراجع. بيانات الدراسة على هذا الجهاز تبقى عليه.',
+          'This permanently deletes your cloud account: friends, messages and the copy stored on the server. It cannot be undone. Study data on this device stays on it.'),
+        {title:L('حذف الحساب','Delete account'),ok:L('متابعة','Continue'),cancel:L('إلغاء','Cancel'),danger:true}).then(function(y){
+      if(!y)return;
+      return ask(L('متأكد؟ هذي آخر فرصة.','Are you sure? This is final.'),
+          {title:L('حذف الحساب','Delete account'),ok:L('احذف حسابي','Delete my account'),cancel:L('إلغاء','Cancel'),danger:true}).then(function(y2){
+        if(!y2)return;
+        return frRpc('delete_my_account',{}).then(function(){
+          /* drop the dead session first so nothing tries to push data for a deleted user */
+          try{SB.tok='';SB.exp=0;SB.uid='';localStorage.removeItem('mudhakirati-sb')}catch(e){}
+          try{closeSheet()}catch(e){}
+          try{logout()}catch(e){}
+          toast(L('انحذف حسابك السحابي.','Your cloud account was deleted.'))})})
+    }).catch(function(e){
+      toast(e&&e.offline?L('سجّل الدخول بحساب سحابي أولًا','Sign in with a cloud account first'):
+        L('تعذّر حذف الحساب، حاول لاحقًا','Could not delete the account, try again later'))})}
+
+  document.addEventListener('click',function(e){
+    var el=e.target.closest&&e.target.closest('[data-x]');if(!el)return;
+    var x=el.getAttribute('data-x');
+    if(x==='privacy')showPrivacy();
+    else if(x==='privclose')closeOv();
+    else if(x==='delacct')doDelete();
+    else if(x==='rptuser')doReport()});
+
+  /* ---------- put the buttons into the existing sheets ---------- */
+  var q=0;
+  function scan(){q=0;
+    try{
+      var lo=document.querySelector('#sheetBody [data-a="logout"]');
+      if(lo&&!document.getElementById('xAcct')){
+        var sect=lo.closest('.sect');
+        if(sect&&sect.parentNode){
+          var d=document.createElement('div');d.className='sect';d.id='xAcct';
+          d.innerHTML='<button type="button" class="btn ghost" data-x="privacy">'+L('سياسة الخصوصية','Privacy policy')+'</button>'+
+            '<button type="button" class="btn ghost danger" data-x="delacct">'+L('حذف حسابي نهائيًا','Delete my account permanently')+'</button>'+
+            '<div class="small muted">'+L('يحذف الحساب السحابي والأصدقاء والرسائل.','Deletes the cloud account, friends and messages.')+'</div>';
+          sect.parentNode.insertBefore(d,sect.nextSibling)}}
+      var bl=document.querySelector('#chHead [data-a="chblock"]');
+      if(bl&&!document.getElementById('xRptBtn')){
+        var c=document.createElement('button');c.type='button';c.className='chip';c.id='xRptBtn';c.setAttribute('data-x','rptuser');
+        c.textContent=L('إبلاغ','Report');bl.parentNode.insertBefore(c,bl.nextSibling)}
+    }catch(e){}}
+  var root=document.getElementById('sheetBody');
+  if(root&&window.MutationObserver)new MutationObserver(function(){if(!q){q=1;requestAnimationFrame(scan)}}).observe(root,{childList:true,subtree:true});
+  scan();
+}catch(e){try{console.error('moderation addon',e)}catch(x){}}
+})();
 </script>
 </body>
 </html>
